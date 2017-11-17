@@ -4,8 +4,26 @@ $page-width: 700px;
 // COLORS
 $text-color: #303030;
 $text-color-light: #ffffff;
-
 $page-background-color: #ebebeb;
 $content-background-color: #ffffff;
 $border-color: #e4e0e0;
 $highlight-color: #5aac7d;
+
+// MIXINS
+@mixin taxicoin-button($button-color, $button-text-color) {
+  border: none;
+  background-color: $button-color;
+  color: $button-text-color;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 1.2rem;
+  padding: 5px 10px;
+
+  &:hover {
+    background-color: darken($button-color, 10);
+  }
+
+  &:active {
+    background-color: darken($button-color, 20);
+  }
+}

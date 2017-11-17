@@ -1,5 +1,5 @@
-var TaxiCoin = artifacts.require("./TaxiCoin.sol");
+var Taxicoin = artifacts.require("Taxicoin");
 
 module.exports = function(deployer) {
-  deployer.deploy(TaxiCoin);
+  deployer.deploy(Taxicoin);
 };

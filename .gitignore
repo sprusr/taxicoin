@@ -27,3 +27,6 @@ docs/**/*.fls
 docs/**/*.log
 docs/**/*.synctex.gz
 docs/tex/**/*.pdf
+
+# Defaukt Truffle build dir
+build/contracts

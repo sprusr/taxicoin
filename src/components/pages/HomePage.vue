@@ -1,22 +1,22 @@
 <template>
   <article-box class="center">
-    <p class="taxi-emoji">🚖</p>
+    <router-link to="/ride"><p class="taxi-emoji">🚖</p></router-link>
     <p>For more info, check the <router-link to="/about">about page</router-link>.</p>
   </article-box>
 </template>
 
 <script>
-import ArticleBox from '@/components/utility/ArticleBox.vue'
+import ArticleBox from '@/components/utility/ArticleBox'
+
 export default {
   name: 'home-page',
   data () {
-    return {
-      msg: 'Welcome to Your Vue.js App'
-    }
+    return {}
   },
   components: {
     ArticleBox
-  }
+  },
+  methods: {}
 }
 </script>
 
