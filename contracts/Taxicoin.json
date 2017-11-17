@@ -1,0 +1,1068 @@
+{
+  "contractName": "Taxicoin",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "journeyId",
+          "type": "uint256"
+        },
+        {
+          "name": "rating",
+          "type": "uint8"
+        }
+      ],
+      "name": "rateDriver",
+      "outputs": [
+        {
+          "name": "success",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "lat",
+          "type": "int256"
+        },
+        {
+          "name": "lon",
+          "type": "int256"
+        }
+      ],
+      "name": "advertiseDriver",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "revokeDriverAdvert",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "_driver",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "_rating",
+          "type": "uint8"
+        }
+      ],
+      "name": "DriverRating",
+      "type": "event"
+    }
+  ],
+  "bytecode": "0x6060604052341561000f57600080fd5b6101618061001e6000396000f300606060405260043610610057576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806301c678c21461005c5780638fbee1ab146100a3578063defa9d19146100e7575b600080fd5b341561006757600080fd5b610089600480803590602001909190803560ff16906020019091905050610114565b604051808215151515815260200191505060405180910390f35b34156100ae57600080fd5b6100cd6004808035906020019091908035906020019091905050610120565b604051808215151515815260200191505060405180910390f35b34156100f257600080fd5b6100fa61012c565b604051808215151515815260200191505060405180910390f35b60006001905092915050565b60006001905092915050565b600060019050905600a165627a7a72305820b117b79a3ad74622038f080055574ac60d62bf802c003d4a36ac0df668858bf40029",
+  "deployedBytecode": "0x606060405260043610610057576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806301c678c21461005c5780638fbee1ab146100a3578063defa9d19146100e7575b600080fd5b341561006757600080fd5b610089600480803590602001909190803560ff16906020019091905050610114565b604051808215151515815260200191505060405180910390f35b34156100ae57600080fd5b6100cd6004808035906020019091908035906020019091905050610120565b604051808215151515815260200191505060405180910390f35b34156100f257600080fd5b6100fa61012c565b604051808215151515815260200191505060405180910390f35b60006001905092915050565b60006001905092915050565b600060019050905600a165627a7a72305820b117b79a3ad74622038f080055574ac60d62bf802c003d4a36ac0df668858bf40029",
+  "sourceMap": "25:1208:0:-;;;536:36;;;;;;;;25:1208;;;;;;",
+  "deployedSourceMap": "25:1208:0:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;575:240;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;818:219;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1040:191;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;575:240;640:12;807:4;800:11;;575:240;;;;:::o;818:219::-;876:4;1029;1022:11;;818:219;;;;:::o;1040:191::-;1085:4;1223;1216:11;;1040:191;:::o",
+  "source": "pragma solidity ^0.4.4;\n\ncontract Taxicoin {\n\tevent DriverRating(address indexed _driver, uint8 _rating);\n\n\tstruct Journey {\n\t\tDriver driver;\n\t\tRider rider;\n\t\tuint startTime;\n\t\tuint endTime;\n\t}\n\n\tstruct Location {\n\t\t// multiply lat/lon by 1000000 and truncate to get int\n\t\tint lat;\n\t\tint lon;\n\t}\n\n\tstruct Driver {\n\t\taddress driverAddress;\n\t\tLocation location;\n\t\tuint lastLocation; // time at which location was last published\n\t}\n\n\tstruct Rider {\n\t\taddress riderAddress;\n\t\tstring name;\n\t}\n\n\tmapping(address => Driver) private drivers;\n\n\tfunction Taxicoin() public {\n\t\t//\n\t}\n\n\tfunction rateDriver(uint journeyId, uint8 rating) public returns(bool success) {\n\t\t// if not a passenger with them, return false\n\t\t// if already rated, return false\n\n\t\t//DriverRating(journey.driver.driverAddress, rating);\n\n\t\treturn true;\n\t}\n\n\tfunction advertiseDriver(int lat, int lon) public returns(bool) {\n\t\t// if deposit not provided, revert and return false\n\t\t// if new driver, add to drivers list\n\t\t// set driver location and return true\n\n\t\treturn true;\n\t}\n\n\tfunction revokeDriverAdvert() public returns(bool) {\n\t\t// if not valid driver or not advertised, revert and return false\n\t\t// set driver location to invalid and return true\n\n\t\treturn true;\n\t}\n}\n",
+  "sourcePath": "/Users/sprusr/Code/taxicoin/contracts/Taxicoin.sol",
+  "ast": {
+    "attributes": {
+      "absolutePath": "/Users/sprusr/Code/taxicoin/contracts/Taxicoin.sol",
+      "exportedSymbols": {
+        "Taxicoin": [
+          74
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "^",
+            "0.4",
+            ".4"
+          ]
+        },
+        "id": 1,
+        "name": "PragmaDirective",
+        "src": "0:23:0"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            74
+          ],
+          "name": "Taxicoin",
+          "scope": 75
+        },
+        "children": [
+          {
+            "attributes": {
+              "anonymous": false,
+              "name": "DriverRating"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "indexed": true,
+                      "name": "_driver",
+                      "scope": 7,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "type": "address"
+                        },
+                        "id": 2,
+                        "name": "ElementaryTypeName",
+                        "src": "65:7:0"
+                      }
+                    ],
+                    "id": 3,
+                    "name": "VariableDeclaration",
+                    "src": "65:23:0"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "indexed": false,
+                      "name": "_rating",
+                      "scope": 7,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint8",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint8",
+                          "type": "uint8"
+                        },
+                        "id": 4,
+                        "name": "ElementaryTypeName",
+                        "src": "90:5:0"
+                      }
+                    ],
+                    "id": 5,
+                    "name": "VariableDeclaration",
+                    "src": "90:13:0"
+                  }
+                ],
+                "id": 6,
+                "name": "ParameterList",
+                "src": "64:40:0"
+              }
+            ],
+            "id": 7,
+            "name": "EventDefinition",
+            "src": "46:59:0"
+          },
+          {
+            "attributes": {
+              "canonicalName": "Taxicoin.Journey",
+              "name": "Journey",
+              "scope": 74,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "driver",
+                  "scope": 16,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "struct Taxicoin.Driver storage pointer",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "contractScope": null,
+                      "name": "Driver",
+                      "referencedDeclaration": 28,
+                      "type": "struct Taxicoin.Driver storage pointer"
+                    },
+                    "id": 8,
+                    "name": "UserDefinedTypeName",
+                    "src": "127:6:0"
+                  }
+                ],
+                "id": 9,
+                "name": "VariableDeclaration",
+                "src": "127:13:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "rider",
+                  "scope": 16,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "struct Taxicoin.Rider storage pointer",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "contractScope": null,
+                      "name": "Rider",
+                      "referencedDeclaration": 33,
+                      "type": "struct Taxicoin.Rider storage pointer"
+                    },
+                    "id": 10,
+                    "name": "UserDefinedTypeName",
+                    "src": "144:5:0"
+                  }
+                ],
+                "id": 11,
+                "name": "VariableDeclaration",
+                "src": "144:11:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "startTime",
+                  "scope": 16,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "uint256",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "uint",
+                      "type": "uint256"
+                    },
+                    "id": 12,
+                    "name": "ElementaryTypeName",
+                    "src": "159:4:0"
+                  }
+                ],
+                "id": 13,
+                "name": "VariableDeclaration",
+                "src": "159:14:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "endTime",
+                  "scope": 16,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "uint256",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "uint",
+                      "type": "uint256"
+                    },
+                    "id": 14,
+                    "name": "ElementaryTypeName",
+                    "src": "177:4:0"
+                  }
+                ],
+                "id": 15,
+                "name": "VariableDeclaration",
+                "src": "177:12:0"
+              }
+            ],
+            "id": 16,
+            "name": "StructDefinition",
+            "src": "108:85:0"
+          },
+          {
+            "attributes": {
+              "canonicalName": "Taxicoin.Location",
+              "name": "Location",
+              "scope": 74,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "lat",
+                  "scope": 21,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "int256",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "int",
+                      "type": "int256"
+                    },
+                    "id": 17,
+                    "name": "ElementaryTypeName",
+                    "src": "273:3:0"
+                  }
+                ],
+                "id": 18,
+                "name": "VariableDeclaration",
+                "src": "273:7:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "lon",
+                  "scope": 21,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "int256",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "int",
+                      "type": "int256"
+                    },
+                    "id": 19,
+                    "name": "ElementaryTypeName",
+                    "src": "284:3:0"
+                  }
+                ],
+                "id": 20,
+                "name": "VariableDeclaration",
+                "src": "284:7:0"
+              }
+            ],
+            "id": 21,
+            "name": "StructDefinition",
+            "src": "196:99:0"
+          },
+          {
+            "attributes": {
+              "canonicalName": "Taxicoin.Driver",
+              "name": "Driver",
+              "scope": 74,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "driverAddress",
+                  "scope": 28,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "address",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "address",
+                      "type": "address"
+                    },
+                    "id": 22,
+                    "name": "ElementaryTypeName",
+                    "src": "316:7:0"
+                  }
+                ],
+                "id": 23,
+                "name": "VariableDeclaration",
+                "src": "316:21:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "location",
+                  "scope": 28,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "struct Taxicoin.Location storage pointer",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "contractScope": null,
+                      "name": "Location",
+                      "referencedDeclaration": 21,
+                      "type": "struct Taxicoin.Location storage pointer"
+                    },
+                    "id": 24,
+                    "name": "UserDefinedTypeName",
+                    "src": "341:8:0"
+                  }
+                ],
+                "id": 25,
+                "name": "VariableDeclaration",
+                "src": "341:17:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "lastLocation",
+                  "scope": 28,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "uint256",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "uint",
+                      "type": "uint256"
+                    },
+                    "id": 26,
+                    "name": "ElementaryTypeName",
+                    "src": "362:4:0"
+                  }
+                ],
+                "id": 27,
+                "name": "VariableDeclaration",
+                "src": "362:17:0"
+              }
+            ],
+            "id": 28,
+            "name": "StructDefinition",
+            "src": "298:130:0"
+          },
+          {
+            "attributes": {
+              "canonicalName": "Taxicoin.Rider",
+              "name": "Rider",
+              "scope": 74,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "riderAddress",
+                  "scope": 33,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "address",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "address",
+                      "type": "address"
+                    },
+                    "id": 29,
+                    "name": "ElementaryTypeName",
+                    "src": "448:7:0"
+                  }
+                ],
+                "id": 30,
+                "name": "VariableDeclaration",
+                "src": "448:20:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "name",
+                  "scope": 33,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "string storage pointer",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "string",
+                      "type": "string storage pointer"
+                    },
+                    "id": 31,
+                    "name": "ElementaryTypeName",
+                    "src": "472:6:0"
+                  }
+                ],
+                "id": 32,
+                "name": "VariableDeclaration",
+                "src": "472:11:0"
+              }
+            ],
+            "id": 33,
+            "name": "StructDefinition",
+            "src": "431:56:0"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "drivers",
+              "scope": 74,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "mapping(address => struct Taxicoin.Driver storage ref)",
+              "value": null,
+              "visibility": "private"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "type": "mapping(address => struct Taxicoin.Driver storage ref)"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "address",
+                      "type": "address"
+                    },
+                    "id": 34,
+                    "name": "ElementaryTypeName",
+                    "src": "498:7:0"
+                  },
+                  {
+                    "attributes": {
+                      "contractScope": null,
+                      "name": "Driver",
+                      "referencedDeclaration": 28,
+                      "type": "struct Taxicoin.Driver storage pointer"
+                    },
+                    "id": 35,
+                    "name": "UserDefinedTypeName",
+                    "src": "509:6:0"
+                  }
+                ],
+                "id": 36,
+                "name": "Mapping",
+                "src": "490:26:0"
+              }
+            ],
+            "id": 37,
+            "name": "VariableDeclaration",
+            "src": "490:42:0"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "implemented": true,
+              "isConstructor": true,
+              "modifiers": [
+                null
+              ],
+              "name": "Taxicoin",
+              "payable": false,
+              "scope": 74,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 38,
+                "name": "ParameterList",
+                "src": "553:2:0"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 39,
+                "name": "ParameterList",
+                "src": "563:0:0"
+              },
+              {
+                "attributes": {
+                  "statements": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 40,
+                "name": "Block",
+                "src": "563:9:0"
+              }
+            ],
+            "id": 41,
+            "name": "FunctionDefinition",
+            "src": "536:36:0"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "implemented": true,
+              "isConstructor": false,
+              "modifiers": [
+                null
+              ],
+              "name": "rateDriver",
+              "payable": false,
+              "scope": 74,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "journeyId",
+                      "scope": 53,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint",
+                          "type": "uint256"
+                        },
+                        "id": 42,
+                        "name": "ElementaryTypeName",
+                        "src": "595:4:0"
+                      }
+                    ],
+                    "id": 43,
+                    "name": "VariableDeclaration",
+                    "src": "595:14:0"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "rating",
+                      "scope": 53,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint8",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint8",
+                          "type": "uint8"
+                        },
+                        "id": 44,
+                        "name": "ElementaryTypeName",
+                        "src": "611:5:0"
+                      }
+                    ],
+                    "id": 45,
+                    "name": "VariableDeclaration",
+                    "src": "611:12:0"
+                  }
+                ],
+                "id": 46,
+                "name": "ParameterList",
+                "src": "594:30:0"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "success",
+                      "scope": 53,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bool",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bool",
+                          "type": "bool"
+                        },
+                        "id": 47,
+                        "name": "ElementaryTypeName",
+                        "src": "640:4:0"
+                      }
+                    ],
+                    "id": 48,
+                    "name": "VariableDeclaration",
+                    "src": "640:12:0"
+                  }
+                ],
+                "id": 49,
+                "name": "ParameterList",
+                "src": "639:14:0"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 49
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "hexvalue": "74727565",
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "subdenomination": null,
+                          "token": "bool",
+                          "type": "bool",
+                          "value": "true"
+                        },
+                        "id": 50,
+                        "name": "Literal",
+                        "src": "807:4:0"
+                      }
+                    ],
+                    "id": 51,
+                    "name": "Return",
+                    "src": "800:11:0"
+                  }
+                ],
+                "id": 52,
+                "name": "Block",
+                "src": "654:161:0"
+              }
+            ],
+            "id": 53,
+            "name": "FunctionDefinition",
+            "src": "575:240:0"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "implemented": true,
+              "isConstructor": false,
+              "modifiers": [
+                null
+              ],
+              "name": "advertiseDriver",
+              "payable": false,
+              "scope": 74,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "lat",
+                      "scope": 65,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "int256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "int",
+                          "type": "int256"
+                        },
+                        "id": 54,
+                        "name": "ElementaryTypeName",
+                        "src": "843:3:0"
+                      }
+                    ],
+                    "id": 55,
+                    "name": "VariableDeclaration",
+                    "src": "843:7:0"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "lon",
+                      "scope": 65,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "int256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "int",
+                          "type": "int256"
+                        },
+                        "id": 56,
+                        "name": "ElementaryTypeName",
+                        "src": "852:3:0"
+                      }
+                    ],
+                    "id": 57,
+                    "name": "VariableDeclaration",
+                    "src": "852:7:0"
+                  }
+                ],
+                "id": 58,
+                "name": "ParameterList",
+                "src": "842:18:0"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 65,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bool",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bool",
+                          "type": "bool"
+                        },
+                        "id": 59,
+                        "name": "ElementaryTypeName",
+                        "src": "876:4:0"
+                      }
+                    ],
+                    "id": 60,
+                    "name": "VariableDeclaration",
+                    "src": "876:4:0"
+                  }
+                ],
+                "id": 61,
+                "name": "ParameterList",
+                "src": "875:6:0"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 61
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "hexvalue": "74727565",
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "subdenomination": null,
+                          "token": "bool",
+                          "type": "bool",
+                          "value": "true"
+                        },
+                        "id": 62,
+                        "name": "Literal",
+                        "src": "1029:4:0"
+                      }
+                    ],
+                    "id": 63,
+                    "name": "Return",
+                    "src": "1022:11:0"
+                  }
+                ],
+                "id": 64,
+                "name": "Block",
+                "src": "882:155:0"
+              }
+            ],
+            "id": 65,
+            "name": "FunctionDefinition",
+            "src": "818:219:0"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "implemented": true,
+              "isConstructor": false,
+              "modifiers": [
+                null
+              ],
+              "name": "revokeDriverAdvert",
+              "payable": false,
+              "scope": 74,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 66,
+                "name": "ParameterList",
+                "src": "1067:2:0"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 73,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bool",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bool",
+                          "type": "bool"
+                        },
+                        "id": 67,
+                        "name": "ElementaryTypeName",
+                        "src": "1085:4:0"
+                      }
+                    ],
+                    "id": 68,
+                    "name": "VariableDeclaration",
+                    "src": "1085:4:0"
+                  }
+                ],
+                "id": 69,
+                "name": "ParameterList",
+                "src": "1084:6:0"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 69
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "hexvalue": "74727565",
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "subdenomination": null,
+                          "token": "bool",
+                          "type": "bool",
+                          "value": "true"
+                        },
+                        "id": 70,
+                        "name": "Literal",
+                        "src": "1223:4:0"
+                      }
+                    ],
+                    "id": 71,
+                    "name": "Return",
+                    "src": "1216:11:0"
+                  }
+                ],
+                "id": 72,
+                "name": "Block",
+                "src": "1091:140:0"
+              }
+            ],
+            "id": 73,
+            "name": "FunctionDefinition",
+            "src": "1040:191:0"
+          }
+        ],
+        "id": 74,
+        "name": "ContractDefinition",
+        "src": "25:1208:0"
+      }
+    ],
+    "id": 75,
+    "name": "SourceUnit",
+    "src": "0:1234:0"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.18+commit.9cf6e910.Emscripten.clang"
+  },
+  "networks": {
+    "5777": {
+      "events": {},
+      "links": {},
+      "address": "0x9fbda871d559710256a2502a2517b794b482db40"
+    }
+  },
+  "schemaVersion": "1.0.1",
+  "updatedAt": "2017-11-17T14:52:23.479Z"
+}
