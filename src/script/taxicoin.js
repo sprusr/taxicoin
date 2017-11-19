@@ -4,8 +4,52 @@ import TaxicoinJSON from '../../dist/contracts/Taxicoin.json'
 
 class Taxicoin {
   /**
-   * Represents a Taxicoin client instance
-   * Events: job, quote
+   * Web3 instance.
+   */
+  web3
+
+  /**
+   * TruffleContract instance for Taxicoin contract.
+   */
+  contract
+
+  /**
+   * Object to store arrays of handlers for the various events.
+   *
+   * @private
+   */
+  _events
+
+  /**
+   * Mappings between event names and topic hex strings.
+   *
+   * @private
+   */
+  _shhTopics
+
+  /**
+   * The key pair for Whisper.
+   *
+   * @private
+   */
+  _shhIdentity
+
+  /**
+   * The Whisper message filter.
+   *
+   * @private
+   */
+  _shhFilter
+
+  /**
+   * Interval for checking Whisper for new messages.
+   *
+   * @private
+   */
+  _shhInterval
+
+  /**
+   * Represents a Taxicoin client instance.
    *
    * @class
    *
@@ -13,85 +57,44 @@ class Taxicoin {
    * @property contract - the Taxicoin contract instance
    */
   constructor () {
+    // hack for using Web3 v1.0 with TruffleContract
     Web3.providers.HttpProvider.prototype.sendAsync = Web3.providers.HttpProvider.prototype.send
 
+    // initialise our Web3 instance
     if (typeof window !== 'undefined' && typeof window.web3 !== 'undefined') {
       console.info('[Web3] Using browser Web3 provider')
       this.web3 = new Web3(window.web3.currentProvider)
     } else {
-      console.info('[Web3] Using RPC Web3 provider (http://localhost:7545)')
-      this.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'))
+      console.info('[Web3] Using RPC Web3 provider (http://localhost:8545)')
+      this.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'))
     }
 
+    // initialise our contract reference
     this.contract = TruffleContract(TaxicoinJSON)
     this.contract.setProvider(this.web3.currentProvider)
 
-    this.events = {}
+    // object for storing event handlers
+    this._events = {}
 
-    console.log(this.contract)
+    // Whisper topic hex strings
+    this._shhTopics = {
+      job: this.web3.utils.asciiToHex('job '),
+      quote: this.web3.utils.asciiToHex('quot')
+    }
 
-    // let shhIdentity = this.web3.shh.newIdentity()
-    //
-    // var shhWatch = this.web3.shh.watch({
-    //   topics: [ this.web3.fromAscii('taxicoin-job'), shhIdentity ],
-    //   to: shhIdentity
-    // })
-    //
-    // shhWatch.arrived(message => {
-    //   console.log('Reply from ' + this.web3.toAscii(message.payload) + ' whose address is ' + message.from)
-    //   this.emit('job', message)
-    // })
+    // set up Whisper with a new identity
+    this.web3.shh.newKeyPair().then(id => {
+      this._shhIdentity = id
+      return this.web3.shh.newMessageFilter({
+        privateKeyID: id
+      })
+    }).then(() => {
+      return this._generateShhFilter()
+    })
   }
 
   /**
-   * Registers an event handler
-   */
-  on (name, handler) {
-    if (this.events.hasOwnProperty(name)) {
-      this.events[name].push(handler)
-    } else {
-      this.events[name] = [handler]
-    }
-  }
-
-  /**
-   * Unregisters an event handler
-   */
-  off (name, handler) {
-    if (!this.events.hasOwnProperty(name)) {
-      return
-    }
-
-    if (!handler) {
-      this.events[name] = []
-    } else {
-      let index = this.events[name].indexOf(handler)
-      if (index !== -1) {
-        this.events[name].splice(index, 1)
-      }
-    }
-  }
-
-  /**
-   * Emits an event and calls event handlers for that event
-   */
-  emit (name, ...args) {
-    if (!this.events.hasOwnProperty(name)) {
-      return
-    }
-
-    if (!args || !args.length) {
-      args = []
-    }
-
-    let event = this.events[name]
-    for (let i = 0; i < event.length; i++) {
-      event[i].apply(null, args)
-    }
-  }
-
-  /**
-   * A promise for a driver advertisement
+   * A promise for a driver advertisement.
    *
    * @promise AdvertisePromise
    * @reject {TypeError} The lat/lon values are not of the correct format
@@ -105,6 +108,8 @@ class Taxicoin {
    * If a deposit has not already been provided, and is not sent with the advertisement, an error is thrown.
    * If deposit is sent, but has already been provided, the excess is returned and the method returns successfully.
    *
+   * After successfully advertising, if they haven't already, drivers should register a 'job' event handler for incoming jobs.
+   *
    * @param {number} lat - latitude component of the driver location
    * @param {number} lon - longitude component of the driver location
    *
@@ -116,6 +121,7 @@ class Taxicoin {
     // publish location + address + current time (or block?), along with paying deposit if not already
     return new Promise((resolve, reject) => {
       this.contract.deployed().then(instance => {
+        // TODO possibly include Whisper identity?
         return instance.advertiseDriver.call(lat, lon, {from: this.web3.account})
       }).then(resolve).catch(error => {
         // TODO process error
@@ -125,9 +131,16 @@ class Taxicoin {
   }
 
   /**
+   * A promise for revoking a driver advertisement
+   *
+   * @promise RevokeAdvertPromise
+   * @reject {EthereumNetworkError} Problem connecting to Ethereum network
+   */
+
+  /**
    * If an active advertisement exists, it is set as invalid. Deposits are not returned as a result of this action.
    *
-   * @return {boolean} Whether the advertisement was invalidated successfully
+   * @return {RevokeAdvertPromise} Promise which resolves when the transaction is mined
    */
   revokeDriverAdvert () {
     return new Promise((resolve, reject) => {
@@ -141,11 +154,11 @@ class Taxicoin {
   }
 
   /**
-   * @typedef {Object} driver
-   * @property {String} address - Ethereum address of driver
-   * @property {Number} lat - latitude component of the driver location
-   * @property {Number} lon - longitude component of the driver location
-   * @property {Number} rating - decimal between 0 (bad) and 1 (good)
+   * @typedef {object} driver
+   * @property {string} address - Ethereum address of driver
+   * @property {number} lat - latitude component of the driver location
+   * @property {number} lon - longitude component of the driver location
+   * @property {number} rating - decimal between 0 (bad) and 1 (good)
    */
 
   /**
@@ -166,6 +179,10 @@ class Taxicoin {
 
   /**
    * Proposes a job to a driver via shh.
+   *
+   * Riders should register a 'quote' event handler for incoming quotes, if they haven't already.
+   *
+   * @param {string} driverAddress - address of the driver to propose a job to
    */
   proposeJob (driverAddress) {
     // send proposal of journey pickup and dropoff via whisper
@@ -213,6 +230,117 @@ class Taxicoin {
    */
   acceptCancel () {
     //
+  }
+
+  /**
+   * Registers an event handler
+   *
+   * Valid events:
+   *   job    - triggered when a job offer is recieved
+   *   quote  - triggered when a quote is recieved, following a job advertisement
+   *
+   * @param {string} name - the event name
+   * @param {function} handler - the function to be called when the event is triggered
+   */
+  on (name, handler) {
+    if (this._events.hasOwnProperty(name)) {
+      this._events[name].push(handler)
+    } else {
+      this._events[name] = [handler]
+    }
+  }
+
+  /**
+   * Unregisters an event handler
+   *
+   * @param {string} name - the event name for which to unregister a handler
+   * @param {function} handler - the function to unregister
+   */
+  off (name, handler) {
+    if (!this._events.hasOwnProperty(name)) {
+      return
+    }
+
+    if (!handler) {
+      this._events[name] = []
+    } else {
+      let index = this._events[name].indexOf(handler)
+      if (index !== -1) {
+        this._events[name].splice(index, 1)
+      }
+    }
+  }
+
+  /**
+   * Emits an event and calls event handlers for that event
+   *
+   * @param {string} name - the name of the event to trigger
+   * @param {...object} args - the arguments to the event handler(s)
+   */
+  emit (name, ...args) {
+    if (!this._events.hasOwnProperty(name)) {
+      return
+    }
+
+    if (!args || !args.length) {
+      args = []
+    }
+
+    let event = this._events[name]
+    for (let i = 0; i < event.length; i++) {
+      event[i].apply(null, args)
+    }
+  }
+
+  /**
+   * Checks for unread Whisper messages, and emits events accordingly.
+   * Internal method, should not be called externally.
+   *
+   * @private
+   */
+  _checkShhMessages () {
+    console.log(this._shhFilter)
+    return this.web3.shh.getFilterMessages(this._shhFilter).then(messages => {
+      for (let message of messages) {
+        switch (message.topic) {
+          case this._shhTopics.job:
+            this.emit('job', message)
+            break
+          case this._shhTopics.quote:
+            this.emit('quote', message)
+            break
+        }
+      }
+    }).catch(error => {
+      console.error(`[Shh] Error: ${error.message}`)
+      return this._generateShhFilter()
+    })
+  }
+
+  /**
+   * Generates a new Whisper message filter
+   *
+   * @private
+   */
+  _generateShhFilter () {
+    return this.web3.shh.newMessageFilter({
+      privateKeyID: this._shhIdentity
+    }).then(filter => {
+      console.info('[Shh] Registered filter')
+      this._shhFilter = filter
+
+      // clear the interval if we already had one
+      if (this._shhInterval) {
+        clearInterval(this._shhInterval)
+      }
+
+      // check for new messages every 2s
+      this._shhInterval = setInterval(() => {
+        this._checkShhMessages()
+      }, 2000)
+
+      return filter
+    })
   }
 }
 

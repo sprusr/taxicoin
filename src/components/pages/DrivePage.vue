@@ -5,21 +5,17 @@
     </gmap-map>
     <button type="button" class="advertise-button" @click="advertise">Advertise</button>
     <div v-for="(job, index) in jobs">Job: {{job}}</div>
+    <modal v-if="errorModal.show" @close="errorModal.show = false">
+      <h1 slot="header">Error</h1>
+      <p slot="body">{{errorModal.message}}</p>
+    </modal>
   </article-box>
 </template>
 
 <script>
-import Vue from 'vue'
-import * as VueGoogleMaps from 'vue2-google-maps'
-
 import Taxicoin from '@/script/taxicoin'
 import ArticleBox from '@/components/utility/ArticleBox'
-
-Vue.use(VueGoogleMaps, {
-  load: {
-    libraries: 'places'
-  }
-})
+import Modal from '@/components/elements/Modal'
 
 export default {
   name: 'drive-page',
@@ -50,16 +46,16 @@ export default {
         }
       },
       tc: null,
-      jobs: []
+      jobs: [],
+      errorModal: {
+        show: false,
+        message: ''
+      }
     }
   },
   components: {
-    ArticleBox
-  },
-  watch: {
-    '$route' (to, from) {
-      Vue.$gmapDefaultResizeBus.$emit('resize')
-    }
+    ArticleBox,
+    Modal
   },
   created () {
     this.tc = new Taxicoin()
@@ -77,16 +73,16 @@ export default {
         maximumAge: 0
       })
     } else {
-      alert('Geolocation not supported!')
+      this.showError('Geolocation is not supported')
     }
   },
   methods: {
     advertise () {
       this.tc.advertiseDriver(1, 1).then(_ => {
+        // TODO visual feedback
         console.log('advertised')
       }).catch(error => {
-        // TODO handle error
-        console.error(error)
+        this.showError(error.message)
       })
     },
     handleJob (job) {
@@ -95,6 +91,10 @@ export default {
     updateLocation (position) {
       this.map.currentLocation.lat = position.coords.latitude
       this.map.currentLocation.lng = position.coords.longitude
+    },
+    showError (message) {
+      this.errorModal.message = message
+      this.errorModal.show = true
     }
   }
 }

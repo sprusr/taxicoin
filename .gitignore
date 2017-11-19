@@ -28,5 +28,5 @@ docs/**/*.log
 docs/**/*.synctex.gz
 docs/tex/**/*.pdf
 
-# Defaukt Truffle build dir
+# Default Truffle build dir
 build/contracts

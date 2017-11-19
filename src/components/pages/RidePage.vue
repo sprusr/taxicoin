@@ -13,17 +13,8 @@
 </template>
 
 <script>
-import Vue from 'vue'
-import * as VueGoogleMaps from 'vue2-google-maps'
-
 import Taxicoin from '@/script/taxicoin'
 import ArticleBox from '@/components/utility/ArticleBox'
-
-Vue.use(VueGoogleMaps, {
-  load: {
-    libraries: 'places'
-  }
-})
 
 export default {
   name: 'ride-page',
@@ -68,11 +59,6 @@ export default {
   },
   components: {
     ArticleBox
-  },
-  watch: {
-    '$route' (to, from) {
-      Vue.$gmapDefaultResizeBus.$emit('resize')
-    }
   },
   created () {
     this.tc = new Taxicoin()
