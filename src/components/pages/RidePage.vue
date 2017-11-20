@@ -2,10 +2,10 @@
   <article-box class="center">
     <input type="text" id="from-input" value="Current Location" placeholder="From...">
     <gmap-autocomplete id="to-input" value="" placeholder="To..." @place_changed="setPlace"></gmap-autocomplete>
-    <gmap-map :center="map.center" :zoom="map.zoom" :options="map.options" class="route-map" ref="map">
-      <gmap-marker :position="map.currentLocation" :clickable="true" :draggable="false" :icon="map.currentLocationIcon"></gmap-marker>
+    <gmap-map :center="{lat: $location.lat, lng: $location.lng}" :zoom="map.zoom" :options="map.options" class="route-map" ref="map">
+      <gmap-marker :position="{lat: $location.lat, lng: $location.lng}" :clickable="true" :draggable="false" :icon="map.currentLocationIcon"></gmap-marker>
       <gmap-marker :position="map.toLocation" :clickable="true" :draggable="false"></gmap-marker>
-      <gmap-polyline :path="[map.currentLocation, map.toLocation]" :editable="false" :draggable="false" :deepWatch="true" :options="map.routeLineOptions"></gmap-polyline>
+      <gmap-polyline :path="[{lat: $location.lat, lng: $location.lng}, map.toLocation]" :editable="false" :draggable="false" :deepWatch="true" :options="map.routeLineOptions"></gmap-polyline>
     </gmap-map>
     <button type="button" class="order-button">Order (Advertise All)</button>
     <div v-for="(quote, index) in quotes">Quote: {{quote}}</div>
@@ -13,7 +13,6 @@
 </template>
 
 <script>
-import Taxicoin from '@/script/taxicoin'
 import ArticleBox from '@/components/utility/ArticleBox'
 
 export default {
@@ -21,14 +20,6 @@ export default {
   data () {
     return {
       map: {
-        center: {
-          lat: 0,
-          lng: 0
-        },
-        currentLocation: {
-          lat: 0,
-          lng: 0
-        },
         currentLocationIcon: {
           url: 'https://i.stack.imgur.com/VpVF8.png',
           anchor: {
@@ -53,31 +44,14 @@ export default {
           strokeWeight: 2
         }
       },
-      tc: null,
       quotes: []
     }
   },
   components: {
     ArticleBox
   },
-  created () {
-    this.tc = new Taxicoin()
-    this.tc.on('quote', this.handleQuote)
-
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(position => {
-        this.map.center.lat = position.coords.latitude
-        this.map.center.lng = position.coords.longitude
-        this.updateLocation(position)
-      })
-      navigator.geolocation.watchPosition(this.updateLocation, null, {
-        enableHighAccuracy: false,
-        timeout: 5000,
-        maximumAge: 0
-      })
-    } else {
-      alert('Geolocation not supported!')
-    }
+  mounted () {
+    this.$tc.on('quote', this.handleQuote)
   },
   methods: {
     setPlace (place) {
@@ -87,23 +61,19 @@ export default {
     },
     autoMapResize () {
       var bounds = new window.google.maps.LatLngBounds()
-      bounds.extend(this.map.currentLocation)
+      bounds.extend({lat: this.$location.lat, lng: this.$location.lng})
       bounds.extend(this.map.toLocation)
       this.$refs.map.fitBounds(bounds)
     },
     order () {
-      let drivers = this.tc.drivers()
+      let drivers = this.$tc.drivers()
 
       for (let driver of drivers) {
-        this.tc.proposeJob(driver.address)
+        this.$tc.proposeJob(driver.address)
       }
     },
     handleQuote (quote) {
       this.quotes.push(quote)
-    },
-    updateLocation (position) {
-      this.map.currentLocation.lat = position.coords.latitude
-      this.map.currentLocation.lng = position.coords.longitude
     }
   }
 }

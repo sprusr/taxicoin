@@ -1,7 +1,7 @@
 <template>
   <article-box class="center">
-    <gmap-map :center="map.center" :zoom="map.zoom" :options="map.options" class="route-map" ref="map">
-      <gmap-marker :position="map.currentLocation" :clickable="true" :draggable="false" :icon="map.currentLocationIcon"></gmap-marker>
+    <gmap-map :center="{lat: $location.lat, lng: $location.lng}" :zoom="map.zoom" :options="map.options" class="route-map" ref="map">
+      <gmap-marker :position="{lat: $location.lat, lng: $location.lng}" :clickable="true" :draggable="false" :icon="map.currentLocationIcon"></gmap-marker>
     </gmap-map>
     <button type="button" class="advertise-button" @click="advertise">Advertise</button>
     <div v-for="(job, index) in jobs">Job: {{job}}</div>
@@ -13,7 +13,6 @@
 </template>
 
 <script>
-import Taxicoin from '@/script/taxicoin'
 import ArticleBox from '@/components/utility/ArticleBox'
 import Modal from '@/components/elements/Modal'
 
@@ -22,14 +21,6 @@ export default {
   data () {
     return {
       map: {
-        center: {
-          lat: 0,
-          lng: 0
-        },
-        currentLocation: {
-          lat: 0,
-          lng: 0
-        },
         currentLocationIcon: {
           url: 'https://i.stack.imgur.com/VpVF8.png',
           anchor: {
@@ -45,7 +36,6 @@ export default {
           zoomControl: false
         }
       },
-      tc: null,
       jobs: [],
       errorModal: {
         show: false,
@@ -57,28 +47,12 @@ export default {
     ArticleBox,
     Modal
   },
-  created () {
-    this.tc = new Taxicoin()
-    this.tc.on('job', this.handleJob)
-
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(position => {
-        this.map.center.lat = position.coords.latitude
-        this.map.center.lng = position.coords.longitude
-        this.updateLocation(position)
-      })
-      navigator.geolocation.watchPosition(this.updateLocation, null, {
-        enableHighAccuracy: false,
-        timeout: 5000,
-        maximumAge: 0
-      })
-    } else {
-      this.showError('Geolocation is not supported')
-    }
+  mounted () {
+    this.$tc.on('job', this.handleJob)
   },
   methods: {
     advertise () {
-      this.tc.advertiseDriver(1, 1).then(_ => {
+      this.$tc.advertiseDriver(1, 1).then(_ => {
         // TODO visual feedback
         console.log('advertised')
       }).catch(error => {
@@ -87,10 +61,6 @@ export default {
     },
     handleJob (job) {
       this.jobs.push(job)
-    },
-    updateLocation (position) {
-      this.map.currentLocation.lat = position.coords.latitude
-      this.map.currentLocation.lng = position.coords.longitude
     },
     showError (message) {
       this.errorModal.message = message

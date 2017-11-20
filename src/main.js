@@ -6,6 +6,8 @@ import router from './router'
 
 import runtime from 'serviceworker-webpack-plugin/lib/runtime'
 import * as VueGoogleMaps from 'vue2-google-maps'
+import TaxicoinPlugin from './plugins/TaxicoinPlugin'
+import LocationPlugin from './plugins/LocationPlugin'
 
 // register our serviceWorker
 if ('serviceWorker' in navigator) {
@@ -22,6 +24,9 @@ Vue.use(VueGoogleMaps, {
     libraries: 'places'
   }
 })
+
+Vue.use(TaxicoinPlugin)
+Vue.use(LocationPlugin)
 
 Vue.config.productionTip = false
 
