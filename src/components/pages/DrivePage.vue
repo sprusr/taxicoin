@@ -4,7 +4,15 @@
       <gmap-marker :position="{lat: $location.lat, lng: $location.lng}" :clickable="true" :draggable="false" :icon="map.currentLocationIcon"></gmap-marker>
     </gmap-map>
     <button type="button" class="advertise-button" @click="advertise">Advertise</button>
-    <div v-for="(job, index) in jobs">Job: {{job}}</div>
+    <ul>
+      <li v-for="(job, index) in jobs">
+        <p>Job: {{job}}</p>
+        <button type="button" class="quote-button" @click="quote(index)">Quote</button>
+        <button type="button" class="reject-button" @click="reject(index)">Reject</button>
+        <button type="button" class="accept-contract-button" @click="acceptContract(index)">Accept Contract</button>
+      </li>
+    </ul>
+
     <modal v-if="errorModal.show" @close="errorModal.show = false">
       <h1 slot="header">Error</h1>
       <p slot="body">{{errorModal.message}}</p>
@@ -52,11 +60,25 @@ export default {
   },
   methods: {
     advertise () {
-      this.$tc.advertiseDriver(1, 1).then(_ => {
-        // TODO visual feedback
+      this.$tc.driverAdvertise(this.$location.lat, this.$location.lng).then(() => {
         console.log('advertised')
       }).catch(error => {
         this.showError(error.message)
+      })
+    },
+    quote (index) {
+      this.$tc.driverQuoteProposal(this.jobs[index].sig, 100).then(() => {
+        console.log('quoted')
+      })
+    },
+    reject (index) {
+      this.$tc.driverRejectProposal(this.jobs[index].sig).then(() => {
+        console.log('rejected')
+      })
+    },
+    acceptContract (index) {
+      this.$tc.driverAcceptJourney(this.jobs[index].body.address).then(() => {
+        console.log('journey is happening!')
       })
     },
     handleJob (job) {

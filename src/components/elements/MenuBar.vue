@@ -5,6 +5,8 @@
         <h1><router-link to="/">🚖 taxicoin</router-link></h1>
       </div>
       <ul class="nav">
+        <li><router-link to="/ride">Ride</router-link></li>
+        <li><router-link to="/drive">Drive</router-link></li>
         <li><router-link to="/about">About</router-link></li>
         <li><a href="https://github.com/sprusr/taxicoin">GitHub</a></li>
       </ul>

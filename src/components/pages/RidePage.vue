@@ -7,8 +7,19 @@
       <gmap-marker :position="map.toLocation" :clickable="true" :draggable="false"></gmap-marker>
       <gmap-polyline :path="[{lat: $location.lat, lng: $location.lng}, map.toLocation]" :editable="false" :draggable="false" :deepWatch="true" :options="map.routeLineOptions"></gmap-polyline>
     </gmap-map>
-    <button type="button" class="order-button">Order (Advertise All)</button>
-    <div v-for="(quote, index) in quotes">Quote: {{quote}}</div>
+    <button type="button" class="list-button" @click="listDrivers">List Drivers</button>
+    <ul>
+      <li v-for="(driver, index) in drivers">
+        <p>Driver: {{driver}}</p>
+        <button type="button" class="order-button" @click="propose(index)">Propose Job</button>
+      </li>
+    </ul>
+    <ul>
+      <li v-for="(quote, index) in quotes">
+        <p>Quote: {{quote}}</p>
+        <button type="button" class="order-button" @click="accept(index)">Accept Quote</button>
+      </li>
+    </ul>
   </article-box>
 </template>
 
@@ -44,6 +55,7 @@ export default {
           strokeWeight: 2
         }
       },
+      drivers: [],
       quotes: []
     }
   },
@@ -65,12 +77,22 @@ export default {
       bounds.extend(this.map.toLocation)
       this.$refs.map.fitBounds(bounds)
     },
-    order () {
-      let drivers = this.$tc.drivers()
+    listDrivers () {
+      this.$tc.getDrivers().then(drivers => {
+        this.drivers = drivers
+      })
+    },
+    propose (index) {
+      const driver = this.drivers[index]
 
-      for (let driver of drivers) {
-        this.$tc.proposeJob(driver.address)
-      }
+      this.$tc.riderProposeJob(driver.pubKey, {lat: this.$location.lat, lng: this.$location.lng}, this.map.toLocation).then(() => {
+        console.log('proposed')
+      })
+    },
+    accept (index) {
+      this.$tc.riderCreateJourney(this.quotes[index].body.address, this.quotes[index].body.fare).then(() => {
+        console.log('journey contract created')
+      })
     },
     handleQuote (quote) {
       this.quotes.push(quote)
