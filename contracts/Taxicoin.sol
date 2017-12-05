@@ -62,6 +62,8 @@ contract Taxicoin {
 
 		// remove driver from index and mapping
 		dllRemoveDriver(msg.sender);
+
+		drivers[msg.sender].addr = address(0);
 	}
 
 	function riderCreateJourney(address driver) public payable {
@@ -72,7 +74,7 @@ contract Taxicoin {
 		require(riders[msg.sender].driver == address(0));
 
 		// check the driver is advertised
-		require(drivers[msg.sender].addr == msg.sender);
+		require(drivers[driver].addr == driver);
 
 		// set the rider's deposit and fare
 		riders[msg.sender].deposit = riderDeposit;
@@ -80,6 +82,9 @@ contract Taxicoin {
 
 		// set the rider's current driver
 		riders[msg.sender].driver = driver;
+
+		// set the rider's address
+		riders[msg.sender].addr = msg.sender;
 	}
 
 	function driverAcceptJourney(address rider) public {
@@ -112,7 +117,7 @@ contract Taxicoin {
 		require(drivers[driverAddr].riderRating != 0);
 
 		// send deposits back and pay fare
-		msg.sender.transfer(riders[riderAddr].deposit);
+		riderAddr.transfer(riders[riderAddr].deposit);
 		driverAddr.transfer(drivers[driverAddr].deposit + riders[riderAddr].fare);
 
 		// update driver rating
@@ -126,12 +131,17 @@ contract Taxicoin {
 		// potentially fire a rating event here
 
 		// reset rider and driver state
+		riders[riderAddr].addr = address(0);
 		riders[riderAddr].driver = 0;
 		riders[riderAddr].fare = 0;
 		riders[riderAddr].deposit = 0;
+		drivers[driverAddr].addr = address(0);
 		drivers[driverAddr].rider = 0;
 		drivers[driverAddr].riderRating = 0;
 		drivers[driverAddr].deposit = 0;
+
+		// remove driver from index
+		dllRemoveDriver(driverAddr);
 	}
 
 	/*

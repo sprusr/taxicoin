@@ -28,5 +28,6 @@ article {
   background-color: $content-background-color;
   border: 1px solid $border-color;
   padding: 10px;
+  overflow-wrap: break-word;
 }
 </style>
