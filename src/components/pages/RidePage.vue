@@ -134,13 +134,8 @@ button {
 }
 
 .from-location {
+  @include taxicoin-input;
   width: 100%;
-  height: 40px;
-  line-height: 40px;
-  padding: 5px;
-  font-size: 20px;
-  display: block;
-  border: 1px solid $border-color;
-  border-bottom: none;
+  margin-top: 0;
 }
 </style>

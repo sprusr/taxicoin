@@ -27,3 +27,13 @@ $highlight-color: #5aac7d;
     background-color: darken($button-color, 20);
   }
 }
+
+@mixin taxicoin-input() {
+  height: 30px;
+  line-height: 30px;
+  padding: 5px;
+  font-size: 12pt;
+  display: block;
+  border: 1px solid $border-color;
+  margin: 5px 0;
+}

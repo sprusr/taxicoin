@@ -65,22 +65,16 @@ export default {
 }
 
 .location-search-input {
+  @include taxicoin-input;
   width: 100%;
-  height: 40px;
-  line-height: 40px;
-  padding: 5px;
-  font-size: 20px;
-  display: block;
-  border: 1px solid $border-color;
-  border-bottom: none;
 }
 
 .location-search-results {
   position: absolute;
-  top: 40px;
+  top: 30px;
   left: 0;
   right: 0;
-  z-index: 10000;
+  z-index: 2000;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -88,20 +82,18 @@ export default {
   li {
     margin: 0;
     width: 100%;
-    height: 40px;
+    height: 30px;
     background-color: #fff;
     border: 1px solid $border-color;
+    border-top: none;
     padding: 5px;
-    font-size: 20px;
+    font-size: 12pt;
     display: block;
     vertical-align: middle;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-
-    &:not(:last-child) {
-      border-bottom: none;
-    }
+    cursor: pointer;
   }
 }
 </style>
