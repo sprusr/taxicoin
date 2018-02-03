@@ -527,6 +527,25 @@ class Taxicoin {
       return filter
     })
   }
+
+  get web3Url () {
+    return this.web3.currentProvider.host
+  }
+
+  setWeb3Url (url) {
+    console.info(`[Web3] RPC Web3 provider changed to ${url}`)
+    this.web3 = new Web3(new Web3.providers.HttpProvider(url))
+  }
+
+  get shhUrl () {
+    return this.shh.currentProvider.host
+  }
+
+  setShhUrl (url) {
+    console.info(`[Shh] RPC Shh provider changed to ${url}`)
+    this.shh = new Shh(url)
+    // TODO update identity, pending loading from localstorage
+  }
 }
 
 class Web3Error extends Error {
