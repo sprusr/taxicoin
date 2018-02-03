@@ -6,6 +6,26 @@ export default {
           lat: 0,
           lng: 0
         }
+      },
+      methods: {
+        getLocation () {
+          return new Promise((resolve, reject) => {
+            if ('geolocation' in navigator) {
+              navigator.geolocation.getCurrentPosition(position => {
+                storeVM.lat = position.coords.latitude
+                storeVM.lng = position.coords.longitude
+                resolve(position)
+              }, null, {
+                enableHighAccuracy: true,
+                timeout: Infinity,
+                maximumAge: 0
+              })
+            } else {
+              console.error('Geolocation is not supported')
+              reject()
+            }
+          })
+        }
       }
     })
 

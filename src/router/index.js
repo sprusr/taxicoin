@@ -1,8 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 
-import HomePage from '@/components/pages/HomePage'
-import AboutPage from '@/components/pages/AboutPage'
+import SettingsPage from '@/components/pages/SettingsPage'
 import RidePage from '@/components/pages/RidePage'
 import RiderJourneyPage from '@/components/pages/RiderJourneyPage'
 import DrivePage from '@/components/pages/DrivePage'
@@ -14,32 +13,31 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'Home',
-      component: HomePage
+      redirect: '/ride'
     },
     {
-      path: '/about',
-      name: 'About',
-      component: AboutPage
+      path: '/settings',
+      name: 'settings',
+      component: SettingsPage
     },
     {
       path: '/ride',
-      name: 'Ride',
+      name: 'rider',
       component: RidePage
     },
     {
       path: '/ride/journey',
-      name: 'Current Journey',
+      name: 'riderJourney',
       component: RiderJourneyPage
     },
     {
       path: '/drive',
-      name: 'Drive',
+      name: 'driver',
       component: DrivePage
     },
     {
       path: '/drive/journey',
-      name: 'Current Journey',
+      name: 'driverJourney',
       component: DriverJourneyPage
     }
   ]

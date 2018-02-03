@@ -1,8 +1,9 @@
 <template>
   <article-box class="center">
-    <gmap-map :center="{lat: $location.lat, lng: $location.lng}" :zoom="map.zoom" :options="map.options" class="route-map" ref="map">
-      <gmap-marker :position="{lat: $location.lat, lng: $location.lng}" :clickable="true" :draggable="false" :icon="map.currentLocationIcon"></gmap-marker>
-    </gmap-map>
+    <v-map :zoom="map.zoom" :center="[$location.lat, $location.lng]" class="route-map">
+      <v-tilelayer :url="map.url" :attribution="map.attribution"></v-tilelayer>
+      <v-marker :lat-lng="[$location.lat, $location.lng]"></v-marker>
+    </v-map>
     <button type="button" class="advertise-button" @click="advertise">Advertise</button>
     <ul>
       <li v-for="(job, index) in jobs">
@@ -24,25 +25,27 @@
 import ArticleBox from '@/components/utility/ArticleBox'
 import Modal from '@/components/elements/Modal'
 
+import Vue2Leaflet from 'vue2-leaflet'
+import L from 'leaflet'
+
+// hack because leaflet doesn't play well with webpack
+// https://github.com/PaulLeCam/react-leaflet/issues/255#issuecomment-261904061
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png')
+})
+
 export default {
   name: 'drive-page',
   data () {
+    console.log(Vue2Leaflet)
     return {
       map: {
-        currentLocationIcon: {
-          url: 'https://i.stack.imgur.com/VpVF8.png',
-          anchor: {
-            x: 15,
-            y: 15
-          }
-        },
-        zoom: 14,
-        options: {
-          fullscreenControl: false,
-          mapTypeControl: false,
-          streetViewControl: false,
-          zoomControl: false
-        }
+        zoom: 13,
+        url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
       },
       jobs: [],
       errorModal: {
@@ -53,7 +56,10 @@ export default {
   },
   components: {
     ArticleBox,
-    Modal
+    Modal,
+    'v-map': Vue2Leaflet.Map,
+    'v-tilelayer': Vue2Leaflet.TileLayer,
+    'v-marker': Vue2Leaflet.Marker
   },
   mounted () {
     this.$tc.on('job', this.handleJob)
@@ -93,6 +99,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "~leaflet/dist/leaflet.css";
+
 button {
   @include taxicoin-button($highlight-color, $text-color-light);
 }

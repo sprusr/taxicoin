@@ -66,21 +66,23 @@ class Taxicoin {
    * @property web3 - the Ethereum Web3 instance
    * @property contract - the Taxicoin contract instance
    */
-  constructor () {
+  constructor (web3Http, shhHttp, shhPrivateKey) {
     // hack for using Web3 v1.0 with TruffleContract
     Web3.providers.HttpProvider.prototype.sendAsync = Web3.providers.HttpProvider.prototype.send
 
     // initialise our Web3 instance
-    if (typeof window !== 'undefined' && typeof window.web3 !== 'undefined') {
+    if (window && window.web3 && !web3Http) {
       console.info('[Web3] Using browser Web3 provider')
       this.web3 = new Web3(window.web3.currentProvider)
+    } else if (web3Http) {
+      console.info(`[Web3] Using RPC Web3 provider (${web3Http})`)
+      this.web3 = new Web3(new Web3.providers.HttpProvider(web3Http))
     } else {
-      console.info('[Web3] Using RPC Web3 provider (http://localhost:7545)')
-      this.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'))
+      throw new Web3Error('No provider set!')
     }
 
     // initialise our Whisper provider
-    this.shh = new Shh('http://localhost:8545')
+    this.shh = new Shh(shhHttp || web3Http)
 
     // initialise our contract reference
     this.contract = TruffleContract(TaxicoinJSON)
@@ -99,7 +101,13 @@ class Taxicoin {
     }
 
     // set up Whisper with a new identity
-    this.shh.newKeyPair().then(id => {
+    new Promise((resolve, reject) => {
+      if (shhPrivateKey) {
+        resolve(this.shh.addPrivateKey(shhPrivateKey))
+      } else {
+        resolve(this.shh.newKeyPair())
+      }
+    }).then(id => {
       this._shhIdentity = id
     }).then(() => {
       return this._generateShhFilter()
@@ -518,6 +526,18 @@ class Taxicoin {
 
       return filter
     })
+  }
+}
+
+class Web3Error extends Error {
+  constructor (...args) {
+    super(...args)
+
+    this.name = this.constructor.name
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor)
+    }
   }
 }
 

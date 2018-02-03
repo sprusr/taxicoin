@@ -1,12 +1,13 @@
 <template>
   <article-box class="center">
-    <input type="text" id="from-input" value="Current Location" placeholder="From...">
-    <gmap-autocomplete id="to-input" value="" placeholder="To..." @place_changed="setPlace"></gmap-autocomplete>
-    <gmap-map :center="{lat: $location.lat, lng: $location.lng}" :zoom="map.zoom" :options="map.options" class="route-map" ref="map">
-      <gmap-marker :position="{lat: $location.lat, lng: $location.lng}" :clickable="true" :draggable="false" :icon="map.currentLocationIcon"></gmap-marker>
-      <gmap-marker :position="map.toLocation" :clickable="true" :draggable="false"></gmap-marker>
-      <gmap-polyline :path="[{lat: $location.lat, lng: $location.lng}, map.toLocation]" :editable="false" :draggable="false" :deepWatch="true" :options="map.routeLineOptions"></gmap-polyline>
-    </gmap-map>
+    <input class="from-location" type="text" id="from-input" value="Current Location" placeholder="From...">
+    <location-search @select="setPlace"></location-search>
+    <v-map ref="map" :zoom="map.zoom" :center="[map.center.lat, map.center.lng]" class="route-map" @l-load="autoMapResize">
+      <v-tilelayer :url="map.url" :attribution="map.attribution"></v-tilelayer>
+      <v-marker :lat-lng="[$location.lat, $location.lng]"></v-marker>
+      <v-marker :lat-lng="map.toLocation"></v-marker>
+      <v-poly :lat-lngs="[[$location.lat, $location.lng], [map.toLocation.lat, map.toLocation.lng]]" :visible="map.routeLine"></v-poly>
+    </v-map>
     <button type="button" class="list-button" @click="listDrivers">List Drivers</button>
     <ul>
       <li v-for="(driver, index) in drivers">
@@ -25,57 +26,72 @@
 
 <script>
 import ArticleBox from '@/components/utility/ArticleBox'
+import LocationSearch from '@/components/elements/LocationSearch'
+
+import Vue2Leaflet from 'vue2-leaflet'
+import L from 'leaflet'
+
+// hack because leaflet doesn't play well with webpack
+// https://github.com/PaulLeCam/react-leaflet/issues/255#issuecomment-261904061
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png')
+})
 
 export default {
   name: 'ride-page',
   data () {
     return {
       map: {
-        currentLocationIcon: {
-          url: 'https://i.stack.imgur.com/VpVF8.png',
-          anchor: {
-            x: 15,
-            y: 15
-          }
-        },
+        zoom: 13,
+        url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
         toLocation: {
           lat: 0,
           lng: 0
         },
-        zoom: 14,
-        options: {
-          fullscreenControl: false,
-          mapTypeControl: false,
-          streetViewControl: false,
-          zoomControl: false
+        center: {
+          lat: 0,
+          lng: 0
         },
-        routeLineOptions: {
-          strokeColor: '#000000',
-          strokeOpacity: 0.5,
-          strokeWeight: 2
-        }
+        routeLine: false
       },
+      toPlaceName: '',
+      places: [],
       drivers: [],
       quotes: []
     }
   },
   components: {
-    ArticleBox
+    ArticleBox,
+    'v-map': Vue2Leaflet.Map,
+    'v-tilelayer': Vue2Leaflet.TileLayer,
+    'v-marker': Vue2Leaflet.Marker,
+    'v-poly': Vue2Leaflet.Polyline,
+    LocationSearch
   },
   mounted () {
     this.$tc.on('quote', this.handleQuote)
+    this.$location.getLocation().then(position => {
+      this.map.center.lat = position.coords.latitude
+      this.map.center.lng = position.coords.longitude
+    })
   },
   methods: {
     setPlace (place) {
-      this.map.toLocation.lat = place.geometry.location.lat()
-      this.map.toLocation.lng = place.geometry.location.lng()
+      this.map.toLocation.lat = place.lat
+      this.map.toLocation.lng = place.lon
       this.autoMapResize()
     },
     autoMapResize () {
-      var bounds = new window.google.maps.LatLngBounds()
-      bounds.extend({lat: this.$location.lat, lng: this.$location.lng})
-      bounds.extend(this.map.toLocation)
-      this.$refs.map.fitBounds(bounds)
+      let bounds = [[this.$location.lat, this.$location.lng]]
+      if (this.map.toLocation.lat && this.map.toLocation.lng) {
+        bounds.push([this.map.toLocation.lat, this.map.toLocation.lng])
+        this.map.routeLine = true
+      }
+      this.$refs.map.mapObject.fitBounds(bounds, {maxZoom: 14})
     },
     listDrivers () {
       this.$tc.getDrivers().then(drivers => {
@@ -102,11 +118,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "~leaflet/dist/leaflet.css";
+
 button {
   @include taxicoin-button($highlight-color, $text-color-light);
 }
 
-.order-button {
+.list-button, .order-button {
   margin-top: 10px;
 }
 
@@ -115,7 +133,7 @@ button {
   border: 1px solid $border-color;
 }
 
-input[type="text"] {
+.from-location {
   width: 100%;
   height: 40px;
   line-height: 40px;
