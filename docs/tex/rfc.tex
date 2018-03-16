@@ -1,0 +1,43 @@
+\section{Protocol Specification}
+
+In order for Taxicoin to function in real-world scenarios, certain expected functionality of a taxi-hailing application must be rethought.
+
+\subsection{Driver Advertise}
+
+The advertise method takes a location and deposit (value as defined by the contract settings) from a driver and published the location.
+The deposit then acts as incentive to complete a job.
+
+If a deposit has not already been provided, and is not sent with the advertisement, an error is thrown.
+If deposit is sent, but has already been provided, the excess is returned and the method returns successfully.
+
+After successfully advertising, if they haven't already, drivers should register a 'job' event handler for incoming jobs.
+
+\subsection{Driver Advert Revoke}
+
+If an active advertisement exists, it is set as invalid. Deposits are not returned as a result of this action.
+
+\subsection{Rider Propose Job}
+
+Proposes a job to a driver via shh.
+
+Riders should register a 'quote' event handler for incoming quotes, if they haven't already.
+
+\subsection{Driver Quote Proposal}
+
+Propose a fare for a given proposal as a driver.
+
+\subsection{Rider Create Journey}
+
+Accept a quoted fare for a journey as a rider. Forms contract between driver and rider, taking full fare plus deposit from rider.
+
+\subsection{Driver Accept Journey}
+
+Accept a quoted fare for a journey as a rider. Forms contract between driver and rider, taking full fare plus deposit from rider.
+
+\subsection{Complete Journey}
+
+Complete a journey, thus completing the contract, transferring payment, and returning deposits.
+
+\subsection{Cancel Journey}
+
+Propose cancellation of a journey contract. In the case that the other party has already proposed a cancellation, this will accept the proposal.

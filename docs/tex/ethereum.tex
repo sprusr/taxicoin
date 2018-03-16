@@ -1,0 +1,44 @@
+\section{Ethereum Explanation}
+
+Ethereum is a platform consisting of three components: Swarm, a “distributed storage platform and content distribution service” \cite{Swarm}; Whisper, a peer-to-peer communication protocol \cite{Whisper}; and the Ethereum Virtual Machine (EVM) used for running smart contracts \cite{Ethereum}. The latter is often referred to alone simply as “Ethereum”, however all three should be considered part of the same platform, each one complimenting the others. The aim of this section is to explain how these three solutions are used together to develop fully decentralised applications, or dApps.
+
+\subsection{Blockchains}
+
+The EVM component of Ethereum is built on top of a “blockchain”, a term coined by the anonymous creator of Bitcoin \cite{Bitcoin}, which is the original, and most widely known application of such technology. At its core, a blockchain consists of transactions, grouped together into “blocks”, with each group also referencing the previous one, thus forming a “chain”. A blockchain can be thought of simply as a form of database, keeping a state. A transaction represents a state transition, but must be verified before being deemed to be valid and placed in a block.
+
+% TODO: blockchain diagram here?
+
+The blockchain itself is distributed across all nodes in the network (except in cases where a node chooses to reference another’s copy), meaning that, unless explicitly obfuscated by the user, all transaction data on the network is open. This allows the auditing of transactions by any node on the network, and eliminates the need to trust a single entity to provide accurate data - this is the concept of trustlessness.
+
+Transactions on the Bitcoin blockchain are, for the most part, simply that - transactions. They represent a transfer of funds from one "address" to another. They can additionally contain an amount of data, representing anything from a simple message, to a method call in cases where the receiving address is a “smart contract" (or simply “contract”).
+
+In Bitcoin, contracts are a special type of address which causes nodes on the network to execute some predefined code when a transaction is sent to it. Contracts are deployed by a standard (human controlled) address, but once deployed act as independent entities. Unless their code contains functionality to do so, the deployer has no control over the contract.
+
+However, contract execution on the Bitcoin network is not Turing complete, due to the halting problem - the inability to determine whether a section of code will complete execution without looping infinitely. If contract execution was Turing complete in the existing Bitcoin network, a malicious actor would be able to perform a denial of service attack against the network by deploying and calling contact code containing an infinite loop.
+
+This is where the EVM differs, with the addition of “gas”. This introduces a fee per instruction to be executed (paid in Ethereum’s native cryptocurrency, Ether). The sender of a transaction sets the maximum amount of gas they are willing to spend for a transaction to complete, and a contract call will continue executing until either the execution completes, or the maximum amount of gas is consumed. This safely allows the use of loops within contracts, as it becomes very expensive to perform an infinite-loop attack.
+
+The result is that the EVM is Turing complete, and thus in theory any arbitrary program can be implemented in a contract, opening the door to a wide variety of applications.
+
+\subsection{dApps}
+
+While smart contracts are well suited to taking inputs, making state changes, and producing outputs, that is all they do. It is possible to interact with them via a command line interface, through an Ethereum node, however this is obviously far from the desired experience for end users. To address this problem, several attempts at providing a user interface layer for the Ethereum network have been introduced. The most widely adopted, and officially endorsed solution, is Web3 - a browser API which allows interacting with all parts of the Ethereum platform from Javascript embedded on a web page.
+
+This leads to the approach that many Ethereum dApp developers take: considering their application as a traditional “Single Page App”, where instead of calling HTTP API endpoints, they are now interacting with a smart contract through the use of Web3. Smart contracts effectively take the place of a “backend” web server, leading to many benefits over traditional web apps, such as availability, security and integrity.
+
+Coupling this with Whisper allows for peer-to-peer communication between instances of a dApp, which in most cases translates to between different users. For example, two parties negotiating the price of an item to be purchased - they do not necessarily want their negotiation to be public (or rather, it does not provide any value for it to be), therefore they can come to an agreement “off-chain” before publishing (sending) a transaction of the final agreed price. Whisper is also beneficial for situations where the sender of a message wishes to remain anonymous. When publishing a transaction on the blockchain, the sender is published along with it, whereas in Whisper, unless signed, it is improbable to determine the sender of a message [cite].
+
+Additionally, the static HTML, Javascript and any additional components of a dApp can be hosted from Swarm (or a similar platform such as IPFS [cite]). When a file, or set of files, is published to Swarm, a hash is computed, and the file is split into pieces called “shards”. The shards are then distributed across nodes in the network, with the intention that if one node becomes unavailable, the shards of the file should still be accessible. When a user wishes to retrieve a file at a later date, they can provide the previously computed hash to a Swarm node, which will request shards of the file from its connected peers.
+
+In this manner, it is possible with the Ethereum platform to develop fully decentralised applications where the user interface is written as a web page and is served from Swarm, thus eliminating the requirement for a traditional web server. An application’s “backend” logic is contained within a smart contract, removing the need for a backend web server such as PHP. And finally, instances of the application may communicate between each other through the use of Whisper, removing the need for a solution such as WebSockets, where a central signalling server is required.
+
+\subsection{Smart Contract System Design}
+
+As smart contract execution is only ever triggered as a result of a transaction, applications must be designed around deliberate actions. For example, where in a traditional system, a method may be set to execute at a particular date and time, in a smart contract this is not possible. Instead such a method may only have a check for if the allowed time of execution has passed, and must be manually triggered by a transaction.
+
+As the reasons for some of these differences are unlikely to be clear to users, it is important to consider how to communicate them.
+
+Additionally, as there is an attached "gas" fee for publishing transactions and calling contract methods, it is in the interests of the users for the contract developer to make contracts as efficient as possible, and to make a minimal number of contract calls in a dApp. One way of doing this is to avoid on-chain interaction wherever possible, through the use of peer-to-peer protocols, predominantly Whisper. In extreme cases, complex routines within contracts can be written in the underlying EVM byte-code for improved efficiency.
+
+\subsection{Benefits of Decentralisation}
+% TODO: benefits of decentralisation

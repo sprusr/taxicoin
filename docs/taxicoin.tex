@@ -1,0 +1,43 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{url}
+\usepackage[backend=bibtex8,sorting=none]{biblatex}
+\usepackage{pdfpages}
+
+\addbibresource{main.bib}
+
+\title{Building a Decentralised Taxi App}
+\author{Scott Street\\{\small 159027651}}
+\date{October 2017}
+
+\begin{document}
+
+\maketitle
+
+% TODO: write the abstract
+\abstract{Decentralised apps are pretty cool, but they don't quite work the same as what we're used to.}
+
+\tableofcontents
+
+\pagebreak
+
+\input{tex/intro}
+\input{tex/ethereum}
+\input{tex/rfc}
+
+\pagebreak
+
+\section*{Appendix}
+\addcontentsline{toc}{section}{Appendix}
+
+\input{tex/appendix/project-definition}
+\pagebreak
+\input{tex/appendix/tp1-progress-review}
+\pagebreak
+
+\printbibliography[heading=bibintoc]
+
+\end{document}

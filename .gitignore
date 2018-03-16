@@ -27,6 +27,7 @@ docs/**/*.fls
 docs/**/*.log
 docs/**/*.synctex.gz
 docs/tex/**/*.pdf
+docs/.texpadtmp
 
 # Default Truffle build dir
 build/contracts
