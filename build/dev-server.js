@@ -13,11 +13,9 @@ var proxyMiddleware = require('http-proxy-middleware')
 var webpackConfig = (process.env.NODE_ENV === 'testing' || process.env.NODE_ENV === 'production')
   ? require('./webpack.prod.conf')
   : require('./webpack.dev.conf')
-var TestRPC = require('ethereumjs-testrpc')
 
 // default port where dev server listens for incoming traffic
 var port = process.env.PORT || config.dev.port
-var rpcPort = process.env.RPC_PORT || config.dev.rpcPort
 // automatically open browser, if not set will be false
 var autoOpenBrowser = !!config.dev.autoOpenBrowser
 // Define HTTP proxies to your custom API backend
@@ -85,12 +83,6 @@ devMiddleware.waitUntilValid(() => {
 })
 
 var server = app.listen(port)
-
-// TODO make the running message appear in the "Compiled successfully" bit
-var rpcServer = TestRPC.server()
-rpcServer.listen(rpcPort, (err, blockchain) => {
-  err ? console.error(err) : console.log('> TestRPC running on port ' + rpcPort)
-})
 
 module.exports = {
   ready: readyPromise,
