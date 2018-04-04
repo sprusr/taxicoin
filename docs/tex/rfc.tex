@@ -1,43 +1,113 @@
 \section{Protocol Specification}
 
-In order for Taxicoin to function in real-world scenarios, certain expected functionality of a taxi-hailing application must be rethought.
+The protocol portion of Taxicoin is designed to be open. As such, anybody should be able to implement it in their own software. The following section of this document should be sufficient to do so.
 
-\subsection{Driver Advertise}
+\subsection{Methods}
 
-The advertise method takes a location and deposit (value as defined by the contract settings) from a driver and published the location.
-The deposit then acts as incentive to complete a job.
+Each of these methods is intended to be part of a smart contract. When one is called, it will modify the state of the contract, and/or return a value.
 
-If a deposit has not already been provided, and is not sent with the advertisement, an error is thrown.
-If deposit is sent, but has already been provided, the excess is returned and the method returns successfully.
+The specified arguments are to be supplied when calling that function of the contract. The \textit{payable} keyword indicates that a method accepts a transaction with a currency value attached.
 
-After successfully advertising, if they haven't already, drivers should register a 'job' event handler for incoming jobs.
+\subsubsection{Driver Advertise}
 
-\subsection{Driver Advert Revoke}
+\begin{description}
+	\item [Arguments] latitude; longitude; Whisper identity
+	\item [Payable] driver deposit value, defined in contract
+\end{description}
 
-If an active advertisement exists, it is set as invalid. Deposits are not returned as a result of this action.
+The advertise method takes a location and deposit (value as defined by the contract settings) from a driver and the contract publishes the location of the driver.
 
-\subsection{Rider Propose Job}
+If a deposit has not already been provided, and is not sent with the advertisement, an error is thrown. If deposit is sent, but has already been provided, the excess is returned and the method returns successfully.
 
-Proposes a job to a driver via shh.
+\subsubsection{Driver Advert Revoke}
 
-Riders should register a 'quote' event handler for incoming quotes, if they haven't already.
+\begin{description}
+	\item [Arguments] none
+	\item [Payable] no
+\end{description}
 
-\subsection{Driver Quote Proposal}
+If an active advertisement exists, its state is set to invalid, indicating that riders should not consider this driver. Deposits are not returned as a result of this action.
 
-Propose a fare for a given proposal as a driver.
+\subsubsection{Rider Create Journey}
 
-\subsection{Rider Create Journey}
+\begin{description}
+	\item [Arguments] driver address, fare
+	\item [Payable] fare plus rider deposit value, defined in contract
+\end{description}
 
-Accept a quoted fare for a journey as a rider. Forms contract between driver and rider, taking full fare plus deposit from rider.
+Accepts a quoted fare for a journey as a rider and forms contract between driver and rider, taking full fare plus deposit from rider.
 
-\subsection{Driver Accept Journey}
+The contract is not complete until the driver formally accepts the job by calling the accept journey method. Before this happens, the journey may be cancelled with no adverse effect for the rider, with the fare and deposit being returned in full.
 
-Accept a quoted fare for a journey as a rider. Forms contract between driver and rider, taking full fare plus deposit from rider.
+This is intended to be called after an off-chain negotiation, with job proposal and quote messages.
 
-\subsection{Complete Journey}
+\subsubsection{Driver Accept Journey}
 
-Complete a journey, thus completing the contract, transferring payment, and returning deposits.
+\begin{description}
+	\item [Arguments] rider address
+	\item [Payable] no
+\end{description}
 
-\subsection{Cancel Journey}
+Formally accepts a job, committing both the rider and driver to its completion (or otherwise amicable resolution) at the stake of the fare and deposits.
 
-Propose cancellation of a journey contract. In the case that the other party has already proposed a cancellation, this will accept the proposal.
+If the rider, as identified by the given address, has not initiated a journey contract, then the method will return an error.
+
+\subsubsection{Complete Journey}
+
+\begin{description}
+	\item [Arguments] none
+	\item [Payable] no
+\end{description}
+
+Marks the current journey as completed, as either the rider or driver. The journey will not be fully complete until both parties have called this method.
+
+Once the journey is complete, the fare is paid from the contract to the driver, and deposits are returned to both parties.
+
+\subsubsection{Cancel Journey}
+
+\begin{description}
+	\item [Arguments] none
+	\item [Payable] no
+\end{description}
+
+Proposes the cancellation of a journey, or in the case that the other party has already proposed a cancellation, accepts the proposal.
+
+The fare is returned from the contract to the rider, along with the rider's deposit. The driver's deposit is not returned.
+
+\subsection{Messages}
+
+Driver and rider user clients should be listening for the following messages, where applicable. These messages are communicated via the Whisper protocol.
+
+Message topics are always a length of 4 bytes (4 ASCII characters), therefore any topics listed here of a length less than 4 byes are right-padded with spaces.
+
+\subsubsection{Job Proposal}
+
+\begin{description}
+	\item [Topic] job
+\end{description}
+
+This message is sent by a rider to a prospective driver, indicating that they wish to make the described journey. It is intended to be sent to advertised drivers matching a specified criteria, e.g. within a certain distance, with at least a certain reputation. However the sending of these messages is not intended to be carried out manually by the user -- rather there is an automated process which fetches the list of active drivers and determines which to propose to.
+
+The payload consists of an ASCII string of a stringified JSON object containing \lstinline{pickup} and \lstinline{dropoff} locations, as well as the network (Ethereum) address of the rider.
+
+\lstinputlisting{res/job-message.json}
+
+Should a driver be interested in a proposal, they respond with a quote message.
+
+\subsubsection{Driver Quote}
+
+\begin{description}
+	\item [Topic] quot
+\end{description}
+
+This message is sent by a driver as a response to a job proposal. It contains the network address of the driver, as well as the fare for which the driver is willing to take on the job. At this point, the quote is not binding.
+
+\lstinputlisting{res/quote-message.json}
+
+If the rider chooses to accept the quote, they next call the create journey method.
+
+\subsection{Process Flow Diagram}
+
+\begin{tikzpicture}[node distance=2cm]
+	\node (start) [startstop] {Start};
+\end{tikzpicture}

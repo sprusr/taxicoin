@@ -28,6 +28,11 @@ docs/**/*.log
 docs/**/*.synctex.gz
 docs/tex/**/*.pdf
 docs/.texpadtmp
+docs/*-blx.bib
+docs/*.bbl
+docs/*.blg
+docs/*.run.xml
+docs/*.toc
 
 # Default Truffle build dir
 build/contracts

@@ -1,0 +1,33 @@
+\section{Identification of Requirements}
+
+The first step towards developing Taxicoin was to identify the requirements for the resulting system. These were split into two categories: minimum viable and additional requirements.
+
+\subsection{Minimum Viable Requirements}
+
+These requirements are those which must be included in order for the system to correctly function.
+
+\bigskip\textbf{Drivers must be required to pay a deposit in order to advertise} to act as a reasonable barrier to entry. Without this in place, the network is easily open to spam and scammers posing as drivers. The deposit acts as an incentive to behave well.
+
+\bigskip\textbf{Riders must advertise jobs to drivers on an individual basis} in order to protect the privacy of the rider. As this is likely to contain individually identifying information, such as location, if this were published it could be used to track an individual.
+
+\bigskip\textbf{The fare must be determined by quotes from driver} to remove the need for a centralised fare decision. This is due to the fact that the fare depends on many factors which cannot be automatically determined in a decentralised and reliable manner, such as distance and demand. The alternative would be fixed fares, but this is highly undesirable as short trips would be overpriced, and long trips underpriced.
+
+\bigskip\textbf{Riders must pay fares to a contract in advance} as a security measure, due to the fact that there is no other way to guarantee riders will pay after the fact. Without this, it is likely that a subset of riders would not pay for journeys.
+
+\bigskip\textbf{Riders must provide an additional deposit before starting a journey} to act as an incentive to successfully and formally complete a journey in the system. Without this, riders may have paid fare and have no regard for consequences of bad acts. Additionally, they may not carry on to rate the driver, an integral part of the smooth running of the system.
+
+\bigskip\textbf{Riders and drivers must both rate the other on completion of a journey} to affect the reputation of the other party. This is likely to be implemented such that a user is unable to interact with the rest of the system until they have formally completed their previous journey. Without this requirement, there is no way to determine the trustworthiness of another individual on the network, which is key to preventing bad behaviour.
+
+\bigskip\textbf{When a journey is completed, deposits should be returned to the respective parties, and the fare paid to the driver} this ensures that riders and drivers both have a stake in formally completing a journey. If they do not, their deposits are not returned, and neither is the driver paid. Without this deposit system, there is no guarantee that either party will rate the other - potential hit-and-run scenarios could occur where a rider uses the system only once and does not care to formally complete a journey and rate their driver as it provides no benefit to them. With the deposits however, they are likely to complete the process, at stake of losing their funds.
+
+% TODO: other MVP requirements
+
+\subsection{Additional Requirements}
+
+These are requirements deemed as \enquote{nice to have} features, without which the system will continue to function, but the addition of which would improve the system in some way.
+
+\bigskip\textbf{Prospective drivers and riders should be able to informally communicate before forming a contract} to allow any additional requirements on either part be known. For example if a rider is wishing to take a large, bulky item on the journey with them, they may communicate this in advance. If it transpires that the driver's car is small, the journey can be cancelled (or not formally begun), and another driver arranged, before the original driver has taken the effort of travelling to pick up the rider.
+
+\bigskip\textbf{Dispute resolution should be built into the system} for situations where driver and rider are unable to successfully complete a journey. This would work in a similar way to negotiating a price. In a worst case scenario, the driver wants payment in full, but the rider wants to pay nothing. In this case, the two negotiate until an agreement is reached. If they do not reach such an agreement, it reflects poorly on both parties, as the fact that they have an unresolved dispute is public. The system is able to function without this, but bad disputes are likely to go unresolved which is dissatisfactory.
+
+% TODO: additional requirements

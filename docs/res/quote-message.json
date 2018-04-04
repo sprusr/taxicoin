@@ -1,0 +1,4 @@
+{
+	"address": String,
+	"fare": Integer
+}

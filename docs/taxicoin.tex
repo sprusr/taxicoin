@@ -6,12 +6,60 @@
 \usepackage{url}
 \usepackage[backend=bibtex8,sorting=none]{biblatex}
 \usepackage{pdfpages}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{tikz}
+\usepackage{hyperref}
 
+% set up syntax highlighting for listings
+\definecolor{lightgray}{rgb}{.95,.95,.95}
+\definecolor{darkgray}{rgb}{.4,.4,.4}
+\definecolor{purple}{rgb}{0.65, 0.12, 0.82}
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+\lstset{
+   language=JavaScript,
+   backgroundcolor=\color{lightgray},
+   extendedchars=true,
+   basicstyle=\footnotesize\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   numbers=left,
+   numberstyle=\footnotesize,
+   numbersep=9pt,
+   tabsize=2,
+   breaklines=true,
+   showtabs=false,
+   captionpos=b
+}
+
+% add the file containing our references
 \addbibresource{main.bib}
 
+% include shapes and arrows for flow charts and set up
+\usetikzlibrary{shapes.geometric, arrows}
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30]
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30]
+\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30]
+\tikzstyle{decision} = [diamond, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+
+% document info
 \title{Building a Decentralised Taxi App}
 \author{Scott Street\\{\small 159027651}}
-\date{October 2017}
+\date{April 2018}
 
 \begin{document}
 
@@ -26,8 +74,14 @@
 
 \input{tex/intro}
 \input{tex/ethereum}
+\input{tex/requirements}
 \input{tex/rfc}
+\input{tex/implementation}
+\input{tex/testing}
 
+\pagebreak
+
+\printbibliography[heading=bibintoc]
 \pagebreak
 
 \section*{Appendix}
@@ -36,8 +90,5 @@
 \input{tex/appendix/project-definition}
 \pagebreak
 \input{tex/appendix/tp1-progress-review}
-\pagebreak
-
-\printbibliography[heading=bibintoc]
 
 \end{document}

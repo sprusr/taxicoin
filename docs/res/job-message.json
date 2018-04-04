@@ -1,0 +1,11 @@
+{
+	"pickup": {
+		"lat": String,
+		"lon": String
+	},
+	"dropoff": {
+		"lat": String,
+		"lon": String
+	},
+	"address": String
+}
