@@ -45,6 +45,13 @@ class Taxicoin {
   _shhPubKey
 
   /**
+   * The private key for Whisper to be imported.
+   *
+   * @private
+   */
+  _shhPrivateKey
+
+  /**
    * The Whisper message filter.
    *
    * @private
@@ -72,10 +79,8 @@ class Taxicoin {
 
     // initialise our Web3 instance
     if (window && window.web3 && !web3Http) {
-      console.info('[Web3] Using browser Web3 provider')
       this.web3 = new Web3(window.web3.currentProvider)
     } else if (web3Http) {
-      console.info(`[Web3] Using RPC Web3 provider (${web3Http})`)
       this.web3 = new Web3(new Web3.providers.HttpProvider(web3Http))
     } else {
       throw new Web3Error('No provider set!')
@@ -100,22 +105,9 @@ class Taxicoin {
       quote: this.web3.utils.asciiToHex('quot')
     }
 
-    // set up Whisper with a new identity
-    new Promise((resolve, reject) => {
-      if (shhPrivateKey) {
-        resolve(this.shh.addPrivateKey(shhPrivateKey))
-      } else {
-        resolve(this.shh.newKeyPair())
-      }
-    }).then(id => {
-      this._shhIdentity = id
-    }).then(() => {
-      return this._generateShhFilter()
-    }).then(() => {
-      return this.shh.getPublicKey(this._shhIdentity)
-    }).then((pubKey) => {
-      this._shhPubKey = pubKey
-    })
+    if (shhPrivateKey) {
+      this._shhPrivateKey = shhPrivateKey
+    }
   }
 
   /**
@@ -211,6 +203,7 @@ class Taxicoin {
    * @param {string} driverIdentity - Whisper identity of the driver to propose a job to
    */
   async riderProposeJob (driverIdentity, pickup, dropoff) {
+    await this._waitForShh()
     const accounts = await this.web3.eth.getAccounts()
 
     const proposal = {
@@ -234,6 +227,7 @@ class Taxicoin {
    * Reject a proposed job as a driver.
    */
   async driverRejectProposal (riderIdentity) {
+    await this._waitForShh()
     const accounts = await this.web3.eth.getAccounts()
 
     const response = {
@@ -256,6 +250,7 @@ class Taxicoin {
    * Propose a fare for a given proposal as a driver.
    */
   async driverQuoteProposal (riderIdentity, fare) {
+    await this._waitForShh()
     const accounts = await this.web3.eth.getAccounts()
 
     const response = {
@@ -426,7 +421,8 @@ class Taxicoin {
    * @param {string} name - the event name
    * @param {function} handler - the function to be called when the event is triggered
    */
-  on (name, handler) {
+  async on (name, handler) {
+    await this._waitForShh()
     if (this._events.hasOwnProperty(name)) {
       this._events[name].push(handler)
     } else {
@@ -511,7 +507,6 @@ class Taxicoin {
     return this.shh.newMessageFilter({
       privateKeyID: this._shhIdentity
     }).then(filter => {
-      console.info('[Shh] Registered filter')
       this._shhFilter = filter
 
       // clear the interval if we already had one
@@ -528,12 +523,37 @@ class Taxicoin {
     })
   }
 
+  /**
+   * Returns a promise which resolves only when Whisper is ready to be used.
+   *
+   * @private
+   */
+  async _waitForShh () {
+    if (this._shhIdentity) {
+      return
+    }
+    await this._setupShhIdentity()
+  }
+
+  /**
+   * Sets up Whisper ready for use - initialise keys and start polling for new messages.
+   *
+   * @private
+   */
+  async _setupShhIdentity () {
+    // set up Whisper with a new identity
+    const id = this._shhPrivateKey ? await this.shh.addPrivateKey(this._shhPrivateKey) : await this.shh.newKeyPair()
+    this._shhIdentity = id
+    await this._generateShhFilter()
+    const pubKey = await this.shh.getPublicKey(this._shhIdentity)
+    this._shhPubKey = pubKey
+  }
+
   get web3Url () {
     return this.web3.currentProvider.host
   }
 
   setWeb3Url (url) {
-    console.info(`[Web3] RPC Web3 provider changed to ${url}`)
     this.web3 = new Web3(new Web3.providers.HttpProvider(url))
   }
 
@@ -542,7 +562,6 @@ class Taxicoin {
   }
 
   setShhUrl (url) {
-    console.info(`[Shh] RPC Shh provider changed to ${url}`)
     this.shh = new Shh(url)
     // TODO update identity, pending loading from localstorage
   }
