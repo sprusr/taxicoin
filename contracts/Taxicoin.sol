@@ -172,6 +172,5 @@ contract Taxicoin {
 		// delete state storage
 		delete dllDriverIndex[addr][PREV];
 		delete dllDriverIndex[addr][NEXT];
-		delete drivers[addr];
 	}
 }

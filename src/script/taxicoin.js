@@ -70,27 +70,48 @@ class Taxicoin {
    *
    * @class
    *
-   * @property web3 - the Ethereum Web3 instance
-   * @property contract - the Taxicoin contract instance
+   * @property options - {web3: {provider, account}, shh: {provider, privateKey}, contract}
    */
-  constructor (web3Http, shhHttp, shhPrivateKey) {
+  constructor (options) {
     // hack for using Web3 v1.0 with TruffleContract
     Web3.providers.HttpProvider.prototype.sendAsync = Web3.providers.HttpProvider.prototype.send
 
     // initialise our Web3 instance
-    if (window && window.web3 && !web3Http) {
-      this.web3 = new Web3(window.web3.currentProvider)
-    } else if (web3Http) {
-      this.web3 = new Web3(new Web3.providers.HttpProvider(web3Http))
+    let web3Provider
+    if (window && window.web3 && !options.web3.provider) {
+      web3Provider = window.web3.currentProvider
+    } else if (typeof options.web3.provider === 'string') {
+      web3Provider = new Web3.providers.HttpProvider(options.web3.provider)
+    } else if (options.web3.provider instanceof Web3.providers.HttpProvider) { // TODO: include other providers
+      web3Provider = options.web3.provider
     } else {
       throw new Web3Error('No provider set!')
     }
+    this.web3 = new Web3(web3Provider)
+
+    // if account is defined in options, store it
+    if (options.web3.account) {
+      this._web3Account = options.web3.account
+    }
 
     // initialise our Whisper provider
-    this.shh = new Shh(shhHttp || web3Http)
+    let shhProvider
+    if (typeof options.shh.provider === 'string') {
+      shhProvider = new Web3.providers.HttpProvider(options.shh.provider)
+    } else if (options.shh.provider instanceof Web3.providers.HttpProvider) { // TODO: include other providers
+      shhProvider = options.shh.provider
+    } else {
+      shhProvider = web3Provider
+    }
+    this.shh = new Shh(shhProvider)
+
+    // store the Whisper private key for later if defined
+    if (options.shh.privateKey) {
+      this._shhPrivateKey = options.shh.privateKey
+    }
 
     // initialise our contract reference
-    this.contract = TruffleContract(TaxicoinJSON)
+    this.contract = TruffleContract(options.contract || TaxicoinJSON)
     this.contract.setProvider(this.web3.currentProvider)
     this.contract.defaults({
       gas: 900000
@@ -103,10 +124,6 @@ class Taxicoin {
     this._shhTopics = {
       job: this.web3.utils.asciiToHex('job '),
       quote: this.web3.utils.asciiToHex('quot')
-    }
-
-    if (shhPrivateKey) {
-      this._shhPrivateKey = shhPrivateKey
     }
   }
 
@@ -135,12 +152,13 @@ class Taxicoin {
   async driverAdvertise (lat, lon) {
     const instance = await this.contract.deployed()
     const driverDeposit = await instance.driverDeposit()
-    const accounts = await this.web3.eth.getAccounts()
-    const driver = await instance.drivers(accounts[0])
+    const account = await this.getAccount()
+    const driver = await instance.drivers(account)
     const amountDeposited = driver[5]
     const amountToSend = driverDeposit - amountDeposited <= 0 ? 0 : driverDeposit - amountDeposited
 
-    await instance.driverAdvertise('' + lat, '' + lon, this._shhPubKey, {from: accounts[0], value: amountToSend})
+    await this._waitForShh()
+    return instance.driverAdvertise('' + lat, '' + lon, this._shhPubKey, {from: account, value: amountToSend})
   }
 
   /**
@@ -157,9 +175,9 @@ class Taxicoin {
    */
   async driverRevokeAdvert () {
     const instance = await this.contract.deployed()
-    const accounts = await this.web3.eth.getAccounts()
+    const account = await this.getAccount()
 
-    await instance.driverRevokeAdvert({from: accounts[0]})
+    return instance.driverRevokeAdvert({from: account})
   }
 
   /**
@@ -204,15 +222,15 @@ class Taxicoin {
    */
   async riderProposeJob (driverIdentity, pickup, dropoff) {
     await this._waitForShh()
-    const accounts = await this.web3.eth.getAccounts()
+    const account = await this.getAccount()
 
     const proposal = {
-      address: accounts[0],
+      address: account,
       pickup: pickup,
       dropoff: dropoff
     }
 
-    await this.shh.post({
+    return this.shh.post({
       pubKey: driverIdentity, // pubKey of recipient
       sig: this._shhIdentity, // sign it to prove it's from us
       ttl: 10,
@@ -228,14 +246,14 @@ class Taxicoin {
    */
   async driverRejectProposal (riderIdentity) {
     await this._waitForShh()
-    const accounts = await this.web3.eth.getAccounts()
+    const account = await this.getAccount()
 
     const response = {
-      address: accounts[0],
-      quote: -1
+      address: account,
+      fare: -1
     }
 
-    await this.shh.post({
+    return this.shh.post({
       pubKey: riderIdentity, // pubKey of recipient
       sig: this._shhIdentity, // sign it to prove it's from us
       ttl: 10,
@@ -251,14 +269,14 @@ class Taxicoin {
    */
   async driverQuoteProposal (riderIdentity, fare) {
     await this._waitForShh()
-    const accounts = await this.web3.eth.getAccounts()
+    const account = await this.getAccount()
 
     const response = {
-      address: accounts[0],
+      address: account,
       fare: fare
     }
 
-    await this.shh.post({
+    return this.shh.post({
       pubKey: riderIdentity, // pubKey of recipient
       sig: this._shhIdentity, // sign it to prove it's from us
       ttl: 10,
@@ -277,11 +295,11 @@ class Taxicoin {
    */
   async riderCreateJourney (driverAddress, fare) {
     const instance = await this.contract.deployed()
-    const accounts = await this.web3.eth.getAccounts()
-    const riderDeposit = await instance.riderDeposit()
-    const amountToSend = riderDeposit + fare
+    const account = await this.getAccount()
+    const riderDeposit = await this.getRiderDeposit()
+    const amountToSend = riderDeposit.addn(fare)
 
-    await instance.riderCreateJourney(driverAddress, {from: accounts[0], value: amountToSend})
+    return instance.riderCreateJourney(driverAddress, {from: account, value: amountToSend})
   }
 
   /**
@@ -292,9 +310,9 @@ class Taxicoin {
    */
   async driverAcceptJourney (riderAddress) {
     const instance = await this.contract.deployed()
-    const accounts = await this.web3.eth.getAccounts()
+    const account = await this.getAccount()
 
-    await instance.driverAcceptJourney(riderAddress, {from: accounts[0]})
+    return instance.driverAcceptJourney(riderAddress, {from: account})
   }
 
   /**
@@ -302,9 +320,9 @@ class Taxicoin {
    */
   async riderGetJourney () {
     const instance = await this.contract.deployed()
-    const accounts = await this.web3.eth.getAccounts()
+    const account = await this.getAccount()
 
-    const rider = this._riderArrayToObject(await instance.riders(accounts[0]))
+    const rider = this._riderArrayToObject(await instance.riders(account))
 
     if (rider.driver === ZERO_ADDRESS) {
       return null
@@ -323,9 +341,9 @@ class Taxicoin {
    */
   async driverGetJourney () {
     const instance = await this.contract.deployed()
-    const accounts = await this.web3.eth.getAccounts()
+    const account = await this.getAccount()
 
-    const driver = this._driverArrayToObject(await instance.drivers(accounts[0]))
+    const driver = this._driverArrayToObject(await instance.drivers(account))
 
     if (driver.rider === ZERO_ADDRESS) {
       return null
@@ -345,9 +363,9 @@ class Taxicoin {
    */
   async driverCompleteJourney (rating) {
     const instance = await this.contract.deployed()
-    const accounts = await this.web3.eth.getAccounts()
+    const account = await this.getAccount()
 
-    await instance.driverCompleteJourney(rating, {from: accounts[0]})
+    return instance.driverCompleteJourney(rating, {from: account})
   }
 
   /**
@@ -356,9 +374,9 @@ class Taxicoin {
    */
   async riderCompleteJourney (rating) {
     const instance = await this.contract.deployed()
-    const accounts = await this.web3.eth.getAccounts()
+    const account = await this.getAccount()
 
-    await instance.riderCompleteJourney(rating, {from: accounts[0]})
+    return instance.riderCompleteJourney(rating, {from: account})
   }
 
   /**
@@ -385,12 +403,12 @@ class Taxicoin {
       addr: driverArray[0],
       lat: driverArray[1],
       lon: driverArray[2],
-      updated: driverArray[3],
+      updated: driverArray[3].toNumber(),
       rider: driverArray[4],
-      deposit: driverArray[5],
-      rating: driverArray[6],
-      ratingCount: driverArray[7],
-      riderRating: driverArray[8],
+      deposit: this.web3.utils.toBN(driverArray[5]),
+      rating: driverArray[6].toNumber(),
+      ratingCount: this.web3.utils.toBN(driverArray[7]),
+      riderRating: driverArray[8].toNumber(),
       pubKey: driverArray[9]
     }
   }
@@ -404,10 +422,10 @@ class Taxicoin {
     return {
       addr: riderArray[0],
       driver: riderArray[1],
-      fare: riderArray[2],
-      deposit: riderArray[3],
-      rating: riderArray[4],
-      ratingCount: riderArray[5]
+      fare: this.web3.utils.toBN(riderArray[2]),
+      deposit: this.web3.utils.toBN(riderArray[3]),
+      rating: riderArray[4].toNumber(),
+      ratingCount: this.web3.utils.toBN(riderArray[5])
     }
   }
 
@@ -547,6 +565,43 @@ class Taxicoin {
     await this._generateShhFilter()
     const pubKey = await this.shh.getPublicKey(this._shhIdentity)
     this._shhPubKey = pubKey
+  }
+
+  async getAccount () {
+    return (this._web3Account || (await this.web3.eth.getAccounts())[0]).toLowerCase()
+  }
+
+  async getBalance () {
+    const account = await this.getAccount()
+    const balanceString = await this.web3.eth.getBalance(account)
+    return this.web3.utils.toBN(balanceString)
+  }
+
+  async getDriver (address) {
+    const instance = await this.contract.deployed()
+    return this._driverArrayToObject(await instance.drivers(address))
+  }
+
+  async getRider (address) {
+    const instance = await this.contract.deployed()
+    return this._riderArrayToObject(await instance.riders(address))
+  }
+
+  async getDriverDeposit () {
+    const instance = await this.contract.deployed()
+    const deposit = await instance.driverDeposit()
+    return this.web3.utils.toBN(deposit)
+  }
+
+  async getRiderDeposit () {
+    const instance = await this.contract.deployed()
+    const deposit = await instance.riderDeposit()
+    return this.web3.utils.toBN(deposit)
+  }
+
+  async getShhPubKey () {
+    await this._waitForShh()
+    return this._shhPubKey
   }
 
   get web3Url () {
