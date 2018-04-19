@@ -5,13 +5,15 @@ contract Taxicoin {
 		address addr;
 		string lat;
 		string lon;
+		string pubKey;
 		uint updated;
 		address rider;
 		uint deposit;
 		uint8 rating;
 		uint ratingCount;
 		uint8 riderRating;
-		string pubKey;
+		uint proposedNewFare;
+		bool hasProposedNewFare;
 	}
 
 	struct Rider {
@@ -21,6 +23,14 @@ contract Taxicoin {
 		uint deposit;
 		uint8 rating;
 		uint ratingCount;
+		uint8 driverRating;
+	}
+
+	enum UserType {
+		None,
+		Driver,
+		ActiveDriver,
+		Rider
 	}
 
 	mapping(address => Driver) public drivers;
@@ -52,8 +62,6 @@ contract Taxicoin {
 		drivers[msg.sender].updated = block.timestamp;
 		drivers[msg.sender].deposit = drivers[msg.sender].deposit + msg.value;
 		drivers[msg.sender].pubKey = pubKey;
-
-		// potentially fire an event here
 	}
 
 	function driverRevokeAdvert() public {
@@ -87,6 +95,24 @@ contract Taxicoin {
 		riders[msg.sender].addr = msg.sender;
 	}
 
+	function riderCancelJourney() public {
+		// rider must have created a journey
+		require(riders[msg.sender].addr != address(0));
+
+		// driver must not have accepted
+		require(drivers[riders[msg.sender].driver].rider != msg.sender);
+
+		// send back deposit and fare
+		msg.sender.transfer(riders[msg.sender].deposit);
+		msg.sender.transfer(riders[msg.sender].fare);
+
+		// reset rider state
+		riders[msg.sender].deposit = 0;
+		riders[msg.sender].fare = 0;
+		riders[msg.sender].driver = address(0);
+		riders[msg.sender].addr = address(0);
+	}
+
 	function driverAcceptJourney(address rider) public {
 		// check the driver is advertised
 		require(drivers[msg.sender].addr == msg.sender);
@@ -96,47 +122,68 @@ contract Taxicoin {
 
 		// set the driver's rider
 		drivers[msg.sender].rider = rider;
+
+		// set as not advertised
+		dllRemoveDriver(msg.sender);
+		drivers[msg.sender].addr = address(0);
 	}
 
-	function driverCompleteJourney(uint8 rating) public {
-		// check driver is on a journey
-		require(drivers[msg.sender].rider != address(0));
+	function completeJourney(uint8 rating) public {
+		require(rating > 0);
 
-		// set rating for rider
-		drivers[msg.sender].riderRating = rating;
+		UserType userType = getUserType(msg.sender);
+
+		if (userType == UserType.ActiveDriver) {
+
+			// set rating to give to rider
+			drivers[msg.sender].riderRating = rating;
+
+			// if rider has rated us, apply everything
+			if (riders[drivers[msg.sender].rider].driverRating != 0) {
+				finaliseCompleteJourney(drivers[msg.sender].rider, msg.sender);
+			}
+
+		} else if(userType == UserType.Rider) {
+
+			// set rating to give to driver
+			riders[msg.sender].driverRating = rating;
+
+			// if driver has rated us, apply everything
+			if (drivers[riders[msg.sender].driver].riderRating != 0) {
+				finaliseCompleteJourney(msg.sender, riders[msg.sender].driver);
+			}
+
+		} else {
+			revert();
+		}
 	}
 
-	function riderCompleteJourney(uint8 rating) public {
-		address riderAddr = msg.sender;
-		address driverAddr = riders[riderAddr].driver;
-
-		// check the rider is on a journey
-		require(riders[riderAddr].driver != address(0));
-
-		// check the driver has completed the journey
-		require(drivers[driverAddr].riderRating != 0);
-
-		// send deposits back and pay fare
+	function finaliseCompleteJourney(address riderAddr, address driverAddr) internal {
+		// send rider deposit back
 		riderAddr.transfer(riders[riderAddr].deposit);
-		driverAddr.transfer(drivers[driverAddr].deposit + riders[riderAddr].fare);
+
+		// if fare was non-zero, pay to driver and return driver deposit
+		if (riders[riderAddr].fare > 0) {
+			driverAddr.transfer(drivers[driverAddr].deposit);
+			driverAddr.transfer(riders[riderAddr].fare);
+		}
 
 		// update driver rating
-		drivers[driverAddr].rating = uint8((drivers[driverAddr].rating * drivers[driverAddr].ratingCount + rating) / (drivers[driverAddr].ratingCount + 1));
+		drivers[driverAddr].rating = uint8((drivers[driverAddr].rating * drivers[driverAddr].ratingCount + riders[riderAddr].driverRating) / (drivers[driverAddr].ratingCount + 1));
 		drivers[driverAddr].ratingCount++;
 
 		// update rider rating
 		riders[riderAddr].rating = uint8((riders[riderAddr].rating * riders[riderAddr].ratingCount + drivers[driverAddr].riderRating) / (riders[riderAddr].ratingCount + 1));
 		riders[riderAddr].ratingCount++;
 
-		// potentially fire a rating event here
-
 		// reset rider and driver state
 		riders[riderAddr].addr = address(0);
-		riders[riderAddr].driver = 0;
+		riders[riderAddr].driver = address(0);
+		riders[riderAddr].driverRating = 0;
 		riders[riderAddr].fare = 0;
 		riders[riderAddr].deposit = 0;
 		drivers[driverAddr].addr = address(0);
-		drivers[driverAddr].rider = 0;
+		drivers[driverAddr].rider = address(0);
 		drivers[driverAddr].riderRating = 0;
 		drivers[driverAddr].deposit = 0;
 
@@ -144,10 +191,68 @@ contract Taxicoin {
 		dllRemoveDriver(driverAddr);
 	}
 
-	/*
-	* Double Linked List
-	* Adapted from https://ethereum.stackexchange.com/a/15341
-	*/
+	function driverProposeFareAlteration(uint newFare) public {
+		// user must be active driver
+		require(getUserType(msg.sender) == UserType.ActiveDriver);
+
+		// set the proposed new fare for driver
+		drivers[msg.sender].proposedNewFare = newFare;
+		drivers[msg.sender].hasProposedNewFare = true;
+	}
+
+	function riderConfirmFareAlteration(uint newFare) public payable {
+		// user must be rider
+		require(getUserType(msg.sender) == UserType.Rider);
+
+		// driver must have already agreed to the same new fare
+		require(drivers[riders[msg.sender].driver].hasProposedNewFare);
+		require(drivers[riders[msg.sender].driver].proposedNewFare == newFare);
+
+		uint fareDifference;
+
+		if (newFare > riders[msg.sender].fare) {
+			fareDifference = newFare - riders[msg.sender].fare;
+
+			require(msg.value >= fareDifference);
+
+			if (msg.value > fareDifference) {
+				msg.sender.transfer(msg.value - fareDifference);
+			}
+		} else {
+			fareDifference = riders[msg.sender].fare - newFare;
+			msg.sender.transfer(fareDifference);
+		}
+
+		// set the new fare for the rider
+		riders[msg.sender].fare = newFare;
+
+		// reset the fare proposal for driver
+		drivers[riders[msg.sender].driver].proposedNewFare = 0;
+		drivers[riders[msg.sender].driver].hasProposedNewFare = false;
+	}
+
+	//------------------//
+	// Helper functions //
+	//------------------//
+
+	function getUserType(address addr) public view returns (UserType) {
+		if (drivers[addr].addr == addr) {
+			if (drivers[addr].rider == address(0)) {
+				return UserType.Driver;
+			} else {
+				return UserType.ActiveDriver;
+			}
+		} else if (riders[addr].addr == addr) {
+			return UserType.Rider;
+		} else {
+			return UserType.None;
+		}
+	}
+
+	//---------------------------------------------------------//
+	// Double Linked List     																 //
+	// Adapted from https://ethereum.stackexchange.com/a/15341 //
+	//---------------------------------------------------------//
 
 	mapping(address => mapping(bool => address)) public dllDriverIndex;
 
@@ -174,3 +279,49 @@ contract Taxicoin {
 		delete dllDriverIndex[addr][NEXT];
 	}
 }
+
+/* function driverCompleteJourney(uint8 rating) public {
+	// check driver is on a journey
+	require(drivers[msg.sender].rider != address(0));
+
+	// set rating for rider
+	drivers[msg.sender].riderRating = rating;
+}
+
+function riderCompleteJourney(uint8 rating) public {
+	address riderAddr = msg.sender;
+	address driverAddr = riders[riderAddr].driver;
+
+	// check the rider is on a journey
+	require(riders[riderAddr].driver != address(0));
+
+	// check the driver has completed the journey
+	require(drivers[driverAddr].riderRating != 0);
+
+	// send deposits back and pay fare
+	riderAddr.transfer(riders[riderAddr].deposit);
+	driverAddr.transfer(drivers[driverAddr].deposit + riders[riderAddr].fare);
+
+	// update driver rating
+	drivers[driverAddr].rating = uint8((drivers[driverAddr].rating * drivers[driverAddr].ratingCount + rating) / (drivers[driverAddr].ratingCount + 1));
+	drivers[driverAddr].ratingCount++;
+
+	// update rider rating
+	riders[riderAddr].rating = uint8((riders[riderAddr].rating * riders[riderAddr].ratingCount + drivers[driverAddr].riderRating) / (riders[riderAddr].ratingCount + 1));
+	riders[riderAddr].ratingCount++;
+
+	// potentially fire a rating event here
+
+	// reset rider and driver state
+	riders[riderAddr].addr = address(0);
+	riders[riderAddr].driver = 0;
+	riders[riderAddr].fare = 0;
+	riders[riderAddr].deposit = 0;
+	drivers[driverAddr].addr = address(0);
+	drivers[driverAddr].rider = 0;
+	drivers[driverAddr].riderRating = 0;
+	drivers[driverAddr].deposit = 0;
+
+	// remove driver from index
+	dllRemoveDriver(driverAddr);
+} */

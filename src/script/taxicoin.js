@@ -3,9 +3,15 @@ import Shh from 'web3-shh'
 import TruffleContract from 'truffle-contract'
 import TaxicoinJSON from '../../dist/contracts/Taxicoin.json'
 
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
 class Taxicoin {
+
+  static ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
+  static NONE = 0
+  static DRIVER = 1
+  static ACTIVE_DRIVER = 2
+  static RIDER = 3
+
   /**
    * Web3 instance.
    */
@@ -123,17 +129,14 @@ class Taxicoin {
     // Whisper topic hex strings
     this._shhTopics = {
       job: this.web3.utils.asciiToHex('job '),
-      quote: this.web3.utils.asciiToHex('quot')
+      quote: this.web3.utils.asciiToHex('quot'),
+      created: this.web3.utils.asciiToHex('crea'),
+      accepted: this.web3.utils.asciiToHex('accp'),
+      location: this.web3.utils.asciiToHex('lctn'),
+      completed: this.web3.utils.asciiToHex('cmpl'),
+      newFare: this.web3.utils.asciiToHex('nfar')
     }
   }
-
-  /**
-   * A promise for a driver advertisement.
-   *
-   * @promise AdvertisePromise
-   * @reject {TypeError} The lat/lon values are not of the correct format
-   * @reject {InsufficientDepositError} Not enough
-   */
 
   /**
    * The advertise method takes a location and deposit (value as defined by the contract settings) from a driver and published the location.
@@ -162,13 +165,6 @@ class Taxicoin {
   }
 
   /**
-   * A promise for revoking a driver advertisement
-   *
-   * @promise RevokeAdvertPromise
-   * @reject {EthereumNetworkError} Problem connecting to Ethereum network
-   */
-
-  /**
    * If an active advertisement exists, it is set as invalid. Deposits are not returned as a result of this action.
    *
    * @return {RevokeAdvertPromise} Promise which resolves when the transaction is mined
@@ -181,20 +177,6 @@ class Taxicoin {
   }
 
   /**
-   * @typedef {object} driver
-   * @property {string} addr - Ethereum address of driver
-   * @property {string} lat - latitude component of the driver location
-   * @property {string} lon - longitude component of the driver location
-   * @property {BigNumber} updated
-   * @property {string} rider
-   * @property {BigNumber} deposit
-   * @property {BigNumber} rating - decimal between 0 (bad) and 1 (good)
-   * @property {BigNumber} ratingCount
-   * @property {BigNumber} riderRating
-   * @property {string} shhIdentity
-   */
-
-  /**
    * Gets a list of currently advertised drivers.
    *
    * @return {driver[]} Array of drivers
@@ -205,7 +187,7 @@ class Taxicoin {
     let drivers = []
     let currentDriver = await instance.dllDriverIndex('0x0', true)
 
-    while (currentDriver !== ZERO_ADDRESS) {
+    while (currentDriver !== Taxicoin.ZERO_ADDRESS) {
       drivers.push(this._driverArrayToObject(await instance.drivers(currentDriver)))
       currentDriver = await instance.dllDriverIndex(currentDriver, true)
     }
@@ -288,10 +270,7 @@ class Taxicoin {
   }
 
   /**
-   * Accept a quoted fare for a journey as a rider. Forms contract between
-   * driver and rider, taking full fare plus deposit from rider.
-   *
-   * TODO rewrite docs
+   * Todo.
    */
   async riderCreateJourney (driverAddress, fare) {
     const instance = await this.contract.deployed()
@@ -303,10 +282,17 @@ class Taxicoin {
   }
 
   /**
-   * Accept a quoted fare for a journey as a rider. Forms contract between
-   * driver and rider, taking full fare plus deposit from rider.
-   *
-   * TODO rewrite docs
+   * Todo.
+   */
+  async riderCancelJourney () {
+    const instance = await this.contract.deployed()
+    const account = await this.getAccount()
+
+    return instance.riderCancelJourney({from: account})
+  }
+
+  /**
+   * Todo.
    */
   async driverAcceptJourney (riderAddress) {
     const instance = await this.contract.deployed()
@@ -316,118 +302,52 @@ class Taxicoin {
   }
 
   /**
-   * Returns the details of a rider's current journey
-   */
-  async riderGetJourney () {
-    const instance = await this.contract.deployed()
-    const account = await this.getAccount()
-
-    const rider = this._riderArrayToObject(await instance.riders(account))
-
-    if (rider.driver === ZERO_ADDRESS) {
-      return null
-    }
-
-    const driver = this._driverArrayToObject(await instance.drivers(rider.driver))
-
-    return {
-      rider,
-      driver
-    }
-  }
-
-  /**
-   * Returns the details of a driver's current journey
-   */
-  async driverGetJourney () {
-    const instance = await this.contract.deployed()
-    const account = await this.getAccount()
-
-    const driver = this._driverArrayToObject(await instance.drivers(account))
-
-    if (driver.rider === ZERO_ADDRESS) {
-      return null
-    }
-
-    const rider = this._riderArrayToObject(await instance.riders(driver.rider))
-
-    return {
-      rider,
-      driver
-    }
-  }
-
-  /**
    * Complete a journey, thus completing the contract, transfering payment, and
    * returning deposits.
    */
-  async driverCompleteJourney (rating) {
+  async completeJourney (rating) {
     const instance = await this.contract.deployed()
     const account = await this.getAccount()
 
-    return instance.driverCompleteJourney(rating, {from: account})
+    return instance.completeJourney(rating, {from: account})
+
+    // TODO: send journey complete message
+  }
+
+  async proposeNewFare (newFare) {
+    // TODO: send shh message
   }
 
   /**
-   * Complete a journey, thus completing the contract, transfering payment, and
-   * returning deposits.
+   * Todo.
    */
-  async riderCompleteJourney (rating) {
+  async driverProposeFareAlteration (newFare) {
     const instance = await this.contract.deployed()
     const account = await this.getAccount()
 
-    return instance.riderCompleteJourney(rating, {from: account})
+    return instance.driverProposeFareAlteration(newFare, {from: account})
   }
 
   /**
-   * Propose cancellation of a journey contract.
+   * Todo.
    */
-  proposeCancel () {
-    //
-  }
+  async riderConfirmFareAlteration (newFare) {
+    const instance = await this.contract.deployed()
+    const account = await this.getAccount()
 
-  /**
-   * Accept a proposed cancellation of a contract, returning fare and deposits.
-   */
-  acceptCancel () {
-    //
-  }
+    const journey = await this.getJourney()
 
-  /**
-   * Converts a driver array (returned from Web3) to a driver object
-   *
-   * @return {driver} Driver object
-   */
-  _driverArrayToObject (driverArray) {
-    return {
-      addr: driverArray[0],
-      lat: driverArray[1],
-      lon: driverArray[2],
-      updated: driverArray[3].toNumber(),
-      rider: driverArray[4],
-      deposit: this.web3.utils.toBN(driverArray[5]),
-      rating: driverArray[6].toNumber(),
-      ratingCount: this.web3.utils.toBN(driverArray[7]),
-      riderRating: driverArray[8].toNumber(),
-      pubKey: driverArray[9]
+    let amountToSend = this.web3.utils.toBN(newFare).sub(journey.rider.fare)
+    if (amountToSend.ltn(0)) {
+      amountToSend = 0
     }
+
+    return instance.riderConfirmFareAlteration(newFare, {from: account, value: amountToSend})
   }
 
-  /**
-   * Converts a rider array (returned from Web3) to a rider object
-   *
-   * @return {driver} Driver object
-   */
-  _riderArrayToObject (riderArray) {
-    return {
-      addr: riderArray[0],
-      driver: riderArray[1],
-      fare: this.web3.utils.toBN(riderArray[2]),
-      deposit: this.web3.utils.toBN(riderArray[3]),
-      rating: riderArray[4].toNumber(),
-      ratingCount: this.web3.utils.toBN(riderArray[5])
-    }
-  }
+  // ---------------- //
+  // Whisper messages //
+  // ---------------- //
 
   /**
    * Registers an event handler
@@ -567,6 +487,10 @@ class Taxicoin {
     this._shhPubKey = pubKey
   }
 
+  // ---------------- //
+  // Helper functions //
+  // ---------------- //
+
   async getAccount () {
     return (this._web3Account || (await this.web3.eth.getAccounts())[0]).toLowerCase()
   }
@@ -577,6 +501,36 @@ class Taxicoin {
     return this.web3.utils.toBN(balanceString)
   }
 
+  async getUserType (account) {
+    const instance = await this.contract.deployed()
+    return (await instance.getUserType(account)).toNumber()
+  }
+
+  /**
+   * Returns the details of a user's current journey
+   */
+  async getJourney () {
+    const account = await this.getAccount()
+    const userType = await this.getUserType(account)
+
+    let driver, rider
+
+    if (userType === Taxicoin.RIDER) {
+      rider = await this.getRider(account)
+      driver = await this.getDriver(rider.driver)
+    } else if (userType === Taxicoin.ACTIVE_DRIVER) {
+      driver = await this.getDriver(account)
+      rider = await this.getRider(driver.rider)
+    } else {
+      return null
+    }
+
+    return {
+      rider,
+      driver
+    }
+  }
+
   async getDriver (address) {
     const instance = await this.contract.deployed()
     return this._driverArrayToObject(await instance.drivers(address))
@@ -585,6 +539,45 @@ class Taxicoin {
   async getRider (address) {
     const instance = await this.contract.deployed()
     return this._riderArrayToObject(await instance.riders(address))
+  }
+
+  /**
+   * Converts a driver array (returned from Web3) to a driver object
+   *
+   * @return {driver} Driver object
+   */
+  _driverArrayToObject (driverArray) {
+    return {
+      addr: driverArray[0],
+      lat: driverArray[1],
+      lon: driverArray[2],
+      pubKey: driverArray[3],
+      updated: driverArray[4].toNumber(),
+      rider: driverArray[5],
+      deposit: this.web3.utils.toBN(driverArray[6]),
+      rating: driverArray[7].toNumber(),
+      ratingCount: this.web3.utils.toBN(driverArray[8]),
+      riderRating: driverArray[9].toNumber(),
+      proposedNewFare: this.web3.utils.toBN(driverArray[10]),
+      hasProposedNewFare: driverArray[11]
+    }
+  }
+
+  /**
+   * Converts a rider array (returned from Web3) to a rider object
+   *
+   * @return {driver} Driver object
+   */
+  _riderArrayToObject (riderArray) {
+    return {
+      addr: riderArray[0],
+      driver: riderArray[1],
+      fare: this.web3.utils.toBN(riderArray[2]),
+      deposit: this.web3.utils.toBN(riderArray[3]),
+      rating: riderArray[4].toNumber(),
+      ratingCount: this.web3.utils.toBN(riderArray[5]),
+      driverRating: riderArray[6].toNumber()
+    }
   }
 
   async getDriverDeposit () {
@@ -608,7 +601,7 @@ class Taxicoin {
     return this.web3.currentProvider.host
   }
 
-  setWeb3Url (url) {
+  set web3Url (url) {
     this.web3 = new Web3(new Web3.providers.HttpProvider(url))
   }
 
@@ -616,10 +609,43 @@ class Taxicoin {
     return this.shh.currentProvider.host
   }
 
-  setShhUrl (url) {
+  set shhUrl (url) {
     this.shh = new Shh(url)
     // TODO update identity, pending loading from localstorage
   }
+
+  // ---------------- //
+  // Type definitions //
+  // ---------------- //
+
+  /**
+   * @typedef {object} driver
+   * @property {string} addr - Ethereum address of driver
+   * @property {string} lat - latitude component of the driver location
+   * @property {string} lon - longitude component of the driver location
+   * @property {BigNumber} updated
+   * @property {string} rider
+   * @property {BigNumber} deposit
+   * @property {BigNumber} rating - decimal between 0 (bad) and 1 (good)
+   * @property {BigNumber} ratingCount
+   * @property {BigNumber} riderRating
+   * @property {string} shhIdentity
+   */
+
+  /**
+   * A promise for revoking a driver advertisement
+   *
+   * @promise RevokeAdvertPromise
+   * @reject {EthereumNetworkError} Problem connecting to Ethereum network
+   */
+
+  /**
+   * A promise for a driver advertisement.
+   *
+   * @promise AdvertisePromise
+   * @reject {TypeError} The lat/lon values are not of the correct format
+   * @reject {InsufficientDepositError} Not enough
+   */
 }
 
 class Web3Error extends Error {
