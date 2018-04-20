@@ -62,6 +62,28 @@ describe('taxicoin client library', () => {
       await expect(tcDriver.driverAdvertise(51.5074, 0.1278)).to.be.rejected
     })
 
+    it('should throw an error if user is on a journey as driver', async () => {
+      const driverAccount = await tcDriver.getAccount()
+      const riderAccount = await tcRider.getAccount()
+      const fare = 50000
+
+      await tcDriver.driverAdvertise(51.5074, 0.1278)
+      await tcRider.riderCreateJourney(driverAccount, fare)
+      await tcDriver.driverAcceptJourney(riderAccount)
+
+      await expect(tcDriver.driverAdvertise(51.5074, 0.1278)).to.be.rejected
+    })
+
+    it('should throw an error if user is on a journey as rider', async () => {
+      const driverAccount = await tcDriver.getAccount()
+      const fare = 50000
+
+      await tcDriver.driverAdvertise(51.5074, 0.1278)
+      await tcRider.riderCreateJourney(driverAccount, fare)
+
+      await expect(tcRider.driverAdvertise(51.5074, 0.1278)).to.be.rejected
+    })
+
     it('should publish the driver\'s location and whisper public key', async () => {
       const driverAccount = await tcDriver.getAccount()
       const driverShh = await tcDriver.getShhPubKey()
@@ -266,7 +288,7 @@ describe('taxicoin client library', () => {
       await tcDriver.driverAdvertise(51.5074, 0.1278)
       await tcRider.riderCreateJourney(driverAccount, fare)
 
-      const journey = await tcRider.riderGetJourney()
+      const journey = await tcRider.getJourney()
       journey.should.not.be.null
     })
   })
@@ -286,36 +308,34 @@ describe('taxicoin client library', () => {
       await tcRider.riderCreateJourney(driverAccount, fare)
       await tcDriver.driverAcceptJourney(riderAccount)
 
-      const journey = await tcDriver.driverGetJourney()
+      const journey = await tcDriver.getJourney()
       journey.should.not.be.null
     })
-  })
 
-  describe('rider get journey', () => {
-    it('should return null if the rider is not currently on a journey', async () => {
-      const journey = await tcRider.riderGetJourney()
-      expect(journey).to.be.null
-    })
-
-    it('should return the details of the current journey', async () => {
+    it('should remove the driver from the list of advertised drivers', async () => {
       const driverAccount = await tcDriver.getAccount()
-      const fare = 100
+      const riderAccount = await tcRider.getAccount()
+      const fare = 8000
 
       await tcDriver.driverAdvertise(51.5074, 0.1278)
       await tcRider.riderCreateJourney(driverAccount, fare)
+      await tcDriver.driverAcceptJourney(riderAccount)
 
-      const journey = await tcRider.riderGetJourney()
-      journey.should.not.be.null
-      journey.rider.should.not.be.null
-      journey.rider.addr.should.not.be.null
-      journey.driver.should.not.be.null
-      journey.driver.addr.should.not.be.null
+      const drivers = await tcRider.getDrivers()
+
+      expect(drivers).to.be.empty
     })
   })
 
-  describe('driver get journey', () => {
-    it('should return null if the driver is not currently on a journey', async () => {
-      const journey = await tcDriver.driverGetJourney()
+  describe('get journey', () => {
+    it('should return null when called by a rider who is not currently on a journey', async () => {
+      const journey = await tcRider.getJourney()
+      expect(journey).to.be.null
+    })
+
+    it('should return null when called by an advertised driver who is not currently on a journey', async () => {
+      await tcDriver.driverAdvertise(51.5074, 0.1278)
+      const journey = await tcDriver.getJourney()
       expect(journey).to.be.null
     })
 
@@ -328,7 +348,7 @@ describe('taxicoin client library', () => {
       await tcRider.riderCreateJourney(driverAccount, fare)
       await tcDriver.driverAcceptJourney(riderAccount)
 
-      const journey = await tcDriver.driverGetJourney()
+      const journey = await tcRider.getJourney()
       journey.should.not.be.null
       journey.rider.should.not.be.null
       journey.rider.addr.should.not.be.null
@@ -337,12 +357,16 @@ describe('taxicoin client library', () => {
     })
   })
 
-  describe('driver complete journey', () => {
-    it('should throw an error if the driver is not currently on a journey', async () => {
-      await expect(tcDriver.driverCompleteJourney(255)).to.be.rejected
+  describe('driver send location', () => {
+    it('should cause the rider to recieve a driver location message')
+  })
+
+  describe('complete journey', () => {
+    it('should throw an error if the user is not currently on a journey', async () => {
+      await expect(tcDriver.completeJourney(255)).to.be.rejected
     })
 
-    it('should set the driver\'s rider rating to the given value', async () => {
+    it('should set the driver\'s rider rating to the given value when called by a driver', async () => {
       const driverAccount = await tcDriver.getAccount()
       const riderAccount = await tcRider.getAccount()
       const fare = 100
@@ -351,19 +375,13 @@ describe('taxicoin client library', () => {
       await tcDriver.driverAdvertise(51.5074, 0.1278)
       await tcRider.riderCreateJourney(driverAccount, fare)
       await tcDriver.driverAcceptJourney(riderAccount)
-      await tcDriver.driverCompleteJourney(riderRating)
+      await tcDriver.completeJourney(riderRating)
 
-      const journey = await tcDriver.driverGetJourney()
+      const journey = await tcDriver.getJourney()
       journey.driver.riderRating.should.equal(riderRating)
     })
-  })
 
-  describe('rider complete journey', () => {
-    it('should throw an error if the rider is not currently on a journey', async () => {
-      await expect(tcRider.riderCompleteJourney(255)).to.be.rejected
-    })
-
-    it('should throw an error if the driver has not completed the journey', async () => {
+    it('should set the rider\'s driver rating to the given value when called by a rider', async () => {
       const driverAccount = await tcDriver.getAccount()
       const riderAccount = await tcRider.getAccount()
       const fare = 100
@@ -372,11 +390,13 @@ describe('taxicoin client library', () => {
       await tcDriver.driverAdvertise(51.5074, 0.1278)
       await tcRider.riderCreateJourney(driverAccount, fare)
       await tcDriver.driverAcceptJourney(riderAccount)
+      await tcRider.completeJourney(driverRating)
 
-      await expect(tcRider.riderCompleteJourney(driverRating)).to.be.rejected
+      const journey = await tcRider.getJourney()
+      journey.rider.driverRating.should.equal(driverRating)
     })
 
-    it('should increase the rider\'s balance by the deposit amount minus gas cost', async () => {
+    it('should increase the rider\'s balance by the deposit amount minus gas cost if both parties have called the method', async () => {
       const riderDeposit = await tcRider.getRiderDeposit()
       const driverAccount = await tcDriver.getAccount()
       const riderAccount = await tcRider.getAccount()
@@ -387,16 +407,16 @@ describe('taxicoin client library', () => {
       await tcDriver.driverAdvertise(51.5074, 0.1278)
       await tcRider.riderCreateJourney(driverAccount, fare)
       await tcDriver.driverAcceptJourney(riderAccount)
-      await tcDriver.driverCompleteJourney(riderRating)
+      await tcDriver.completeJourney(riderRating)
 
       const preBalance = await tcRider.getBalance()
-      const tx = await tcRider.riderCompleteJourney(driverRating)
+      const tx = await tcRider.completeJourney(driverRating)
       const postBalance = await tcRider.getBalance()
 
       postBalance.eq(preBalance.add(riderDeposit).subn(tx.receipt.cumulativeGasUsed)).should.be.true
     })
 
-    it('should increase the driver\'s balance by the deposit amount plus the fare of the journey minus gas cost', async () => {
+    it('should increase the driver\'s balance by the deposit amount plus the fare of the journey minus gas cost if both parties have called the method', async () => {
       const driverDeposit = await tcDriver.getDriverDeposit()
       const driverAccount = await tcDriver.getAccount()
       const riderAccount = await tcRider.getAccount()
@@ -407,16 +427,18 @@ describe('taxicoin client library', () => {
       await tcDriver.driverAdvertise(51.5074, 0.1278)
       await tcRider.riderCreateJourney(driverAccount, fare)
       await tcDriver.driverAcceptJourney(riderAccount)
-      await tcDriver.driverCompleteJourney(riderRating)
+      await tcRider.completeJourney(driverRating)
 
       const preBalance = await tcDriver.getBalance()
-      await tcRider.riderCompleteJourney(driverRating)
+      const tx = await tcDriver.completeJourney(riderRating)
       const postBalance = await tcDriver.getBalance()
 
-      postBalance.eq(preBalance.add(driverDeposit).addn(fare)).should.be.true
+      postBalance.eq(preBalance.add(driverDeposit).addn(fare).subn(tx.receipt.cumulativeGasUsed)).should.be.true
     })
 
-    it('should alter the rider\'s overall rating', async () => {
+    //
+
+    it('should alter the rider\'s overall rating if both parties have called the method', async () => {
       const driverAccount = await tcDriver.getAccount()
       const riderAccount = await tcRider.getAccount()
       const fare = 100
@@ -426,17 +448,17 @@ describe('taxicoin client library', () => {
       await tcDriver.driverAdvertise(51.5074, 0.1278)
       await tcRider.riderCreateJourney(driverAccount, fare)
       await tcDriver.driverAcceptJourney(riderAccount)
-      await tcDriver.driverCompleteJourney(riderRating)
+      await tcDriver.completeJourney(riderRating)
 
       const preRider = await tcDriver.getRider(riderAccount)
-      await tcRider.riderCompleteJourney(driverRating)
+      await tcRider.completeJourney(driverRating)
       const postRider = await tcDriver.getRider(riderAccount)
 
       postRider.rating.should.equal(Math.floor(preRider.ratingCount.muln(preRider.rating).addn(riderRating).div(preRider.ratingCount.addn(1)).toNumber()))
       postRider.ratingCount.eq(preRider.ratingCount.addn(1)).should.be.true
     })
 
-    it('should alter the driver\'s overall rating', async () => {
+    it('should alter the driver\'s overall rating if both parties have called the method', async () => {
       const driverAccount = await tcDriver.getAccount()
       const riderAccount = await tcRider.getAccount()
       const fare = 100
@@ -446,17 +468,17 @@ describe('taxicoin client library', () => {
       await tcDriver.driverAdvertise(51.5074, 0.1278)
       await tcRider.riderCreateJourney(driverAccount, fare)
       await tcDriver.driverAcceptJourney(riderAccount)
-      await tcDriver.driverCompleteJourney(riderRating)
+      await tcDriver.completeJourney(riderRating)
 
       const preDriver = await tcRider.getDriver(driverAccount)
-      await tcRider.riderCompleteJourney(driverRating)
+      await tcRider.completeJourney(driverRating)
       const postDriver = await tcRider.getDriver(driverAccount)
 
       postDriver.rating.should.equal(Math.floor(preDriver.ratingCount.muln(preDriver.rating).addn(driverRating).div(preDriver.ratingCount.addn(1)).toNumber()))
       postDriver.ratingCount.eq(preDriver.ratingCount.addn(1)).should.be.true
     })
 
-    it('should set the rider to be not on a journey', async () => {
+    it('should set the rider to be not on a journey if both parties have called the method', async () => {
       const driverAccount = await tcDriver.getAccount()
       const riderAccount = await tcRider.getAccount()
       const fare = 100
@@ -466,14 +488,14 @@ describe('taxicoin client library', () => {
       await tcDriver.driverAdvertise(51.5074, 0.1278)
       await tcRider.riderCreateJourney(driverAccount, fare)
       await tcDriver.driverAcceptJourney(riderAccount)
-      await tcDriver.driverCompleteJourney(riderRating)
-      await tcRider.riderCompleteJourney(driverRating)
+      await tcDriver.completeJourney(riderRating)
+      await tcRider.completeJourney(driverRating)
 
-      const journey = await tcRider.riderGetJourney()
+      const journey = await tcRider.getJourney()
       expect(journey).to.be.null
     })
 
-    it('should set the driver to be not on a journey', async () => {
+    it('should set the driver to be not on a journey if both parties have called the method', async () => {
       const driverAccount = await tcDriver.getAccount()
       const riderAccount = await tcRider.getAccount()
       const fare = 100
@@ -483,14 +505,14 @@ describe('taxicoin client library', () => {
       await tcDriver.driverAdvertise(51.5074, 0.1278)
       await tcRider.riderCreateJourney(driverAccount, fare)
       await tcDriver.driverAcceptJourney(riderAccount)
-      await tcDriver.driverCompleteJourney(riderRating)
-      await tcRider.riderCompleteJourney(driverRating)
+      await tcDriver.completeJourney(riderRating)
+      await tcRider.completeJourney(driverRating)
 
-      const journey = await tcDriver.driverGetJourney()
+      const journey = await tcDriver.getJourney()
       expect(journey).to.be.null
     })
 
-    it('should set the driver to be not advertised', async () => {
+    it('should set the driver to be not advertised if both parties have called the method', async () => {
       const driverAccount = await tcDriver.getAccount()
       const riderAccount = await tcRider.getAccount()
       const fare = 100
@@ -500,12 +522,24 @@ describe('taxicoin client library', () => {
       await tcDriver.driverAdvertise(51.5074, 0.1278)
       await tcRider.riderCreateJourney(driverAccount, fare)
       await tcDriver.driverAcceptJourney(riderAccount)
-      await tcDriver.driverCompleteJourney(riderRating)
-      await tcRider.riderCompleteJourney(driverRating)
+      await tcDriver.completeJourney(riderRating)
+      await tcRider.completeJourney(driverRating)
 
       const drivers = await tcRider.getDrivers()
       drivers.should.be.empty
     })
+  })
+
+  describe('propose new fare', () => {
+    it('should cause the other party to recieve a propose fare alteration message')
+  })
+
+  describe('driver propose fare alteration', () => {
+    //
+  })
+
+  describe('rider confirm fare alteration', () => {
+    //
   })
 })
 

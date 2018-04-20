@@ -18,6 +18,7 @@ contract Taxicoin {
 
 	struct Rider {
 		address addr;
+		string pubKey;
 		address driver;
 		uint fare;
 		uint deposit;
@@ -50,6 +51,10 @@ contract Taxicoin {
 		// check the driver has paid deposit
 		require(drivers[msg.sender].deposit >= driverDeposit || msg.value >= driverDeposit);
 
+		// must not be ActiveDriver or Rider
+		require(getUserType(msg.sender) != UserType.ActiveDriver);
+		require(getUserType(msg.sender) != UserType.Rider);
+
 		// if new driver, add to index
 		if (drivers[msg.sender].addr != msg.sender) {
 			dllAddDriver(msg.sender);
@@ -74,25 +79,32 @@ contract Taxicoin {
 		drivers[msg.sender].addr = address(0);
 	}
 
-	function riderCreateJourney(address driver) public payable {
-		// check the deposit has been paid
-		require(msg.value >= riderDeposit);
+	function riderCreateJourney(address driver, uint fare, string pubKey) public payable {
+		// check the deposit + fare have been paid
+		require(msg.value >= riderDeposit + fare);
 
 		// check the passenger is not already on a journey
 		require(riders[msg.sender].driver == address(0));
 
+		// check driver is not the zero address
+		require(driver != address(0));
+
 		// check the driver is advertised
 		require(drivers[driver].addr == driver);
 
-		// set the rider's deposit and fare
+		// set the rider's deposit, fare and pubKey
 		riders[msg.sender].deposit = riderDeposit;
-		riders[msg.sender].fare = msg.value - riderDeposit;
+		riders[msg.sender].fare = fare;
+		riders[msg.sender].pubKey = pubKey;
 
 		// set the rider's current driver
 		riders[msg.sender].driver = driver;
 
 		// set the rider's address
 		riders[msg.sender].addr = msg.sender;
+
+		// send back any excess value
+		msg.sender.transfer(msg.value - riderDeposit - fare);
 	}
 
 	function riderCancelJourney() public {
@@ -123,9 +135,8 @@ contract Taxicoin {
 		// set the driver's rider
 		drivers[msg.sender].rider = rider;
 
-		// set as not advertised
+		// remove from DLL
 		dllRemoveDriver(msg.sender);
-		drivers[msg.sender].addr = address(0);
 	}
 
 	function completeJourney(uint8 rating) public {
@@ -186,9 +197,6 @@ contract Taxicoin {
 		drivers[driverAddr].rider = address(0);
 		drivers[driverAddr].riderRating = 0;
 		drivers[driverAddr].deposit = 0;
-
-		// remove driver from index
-		dllRemoveDriver(driverAddr);
 	}
 
 	function driverProposeFareAlteration(uint newFare) public {

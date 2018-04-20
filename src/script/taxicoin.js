@@ -250,7 +250,6 @@ class Taxicoin {
    * Propose a fare for a given proposal as a driver.
    */
   async driverQuoteProposal (riderIdentity, fare) {
-    await this._waitForShh()
     const account = await this.getAccount()
 
     const response = {
@@ -258,6 +257,7 @@ class Taxicoin {
       fare: fare
     }
 
+    await this._waitForShh()
     return this.shh.post({
       pubKey: riderIdentity, // pubKey of recipient
       sig: this._shhIdentity, // sign it to prove it's from us
@@ -277,8 +277,27 @@ class Taxicoin {
     const account = await this.getAccount()
     const riderDeposit = await this.getRiderDeposit()
     const amountToSend = riderDeposit.addn(fare)
+    const driver = await this.getDriver(driverAddress)
+    const pubKey = await this.getShhPubKey()
 
-    return instance.riderCreateJourney(driverAddress, {from: account, value: amountToSend})
+    const tx = await instance.riderCreateJourney(driverAddress, fare, pubKey, {from: account, value: amountToSend})
+
+    const payload = {
+      address: account,
+      fare: fare
+    }
+
+    await this.shh.post({
+      pubKey: driver.pubKey, // pubKey of recipient
+      sig: this._shhIdentity, // sign it to prove it's from us
+      ttl: 10,
+      topic: this._shhTopics.created, // 4 bytes
+      payload: this.web3.utils.asciiToHex(JSON.stringify(payload)),
+      powTime: 3, // how long to maths
+      powTarget: 0.5 // how hard to maths
+    })
+
+    return tx
   }
 
   /**
@@ -297,8 +316,48 @@ class Taxicoin {
   async driverAcceptJourney (riderAddress) {
     const instance = await this.contract.deployed()
     const account = await this.getAccount()
+    const rider = await this.getRider(riderAddress)
 
-    return instance.driverAcceptJourney(riderAddress, {from: account})
+    const tx = await instance.driverAcceptJourney(riderAddress, {from: account})
+
+    const payload = {
+      address: account
+    }
+
+    await this._waitForShh()
+    await this.shh.post({
+      pubKey: rider.pubKey, // pubKey of recipient
+      sig: this._shhIdentity, // sign it to prove it's from us
+      ttl: 10,
+      topic: this._shhTopics.accepted, // 4 bytes
+      payload: this.web3.utils.asciiToHex(JSON.stringify(payload)),
+      powTime: 3, // how long to maths
+      powTarget: 0.5 // how hard to maths
+    })
+
+    return tx
+  }
+
+  async driverSendLocation (lat, lon) {
+    const journey = await this.getJourney()
+
+    const payload = {
+      location: {
+        lat: lat,
+        lon: lon
+      }
+    }
+
+    await this._waitForShh()
+    return this.shh.post({
+      pubKey: journey.rider.pubKey, // pubKey of recipient
+      sig: this._shhIdentity, // sign it to prove it's from us
+      ttl: 10,
+      topic: this._shhTopics.location, // 4 bytes
+      payload: this.web3.utils.asciiToHex(JSON.stringify(payload)),
+      powTime: 3, // how long to maths
+      powTarget: 0.5 // how hard to maths
+    })
   }
 
   /**
@@ -308,14 +367,55 @@ class Taxicoin {
   async completeJourney (rating) {
     const instance = await this.contract.deployed()
     const account = await this.getAccount()
+    const journey = await this.getJourney()
 
-    return instance.completeJourney(rating, {from: account})
+    const tx = await instance.completeJourney(rating, {from: account})
 
-    // TODO: send journey complete message
+    let otherPubKey
+    if (this.getUserType() === Taxicoin.RIDER) {
+      otherPubKey = journey.driver.pubKey
+    } else {
+      otherPubKey = journey.rider.pubKey
+    }
+
+    await this._waitForShh()
+    await this.shh.post({
+      pubKey: otherPubKey, // pubKey of recipient
+      sig: this._shhIdentity, // sign it to prove it's from us
+      ttl: 10,
+      topic: this._shhTopics.completed, // 4 bytes
+      payload: this.web3.utils.asciiToHex(JSON.stringify({})),
+      powTime: 3, // how long to maths
+      powTarget: 0.5 // how hard to maths
+    })
+
+    return tx
   }
 
   async proposeNewFare (newFare) {
-    // TODO: send shh message
+    const journey = await this.getJourney()
+
+    let otherPubKey
+    if (this.getUserType() === Taxicoin.RIDER) {
+      otherPubKey = journey.driver.pubKey
+    } else {
+      otherPubKey = journey.rider.pubKey
+    }
+
+    const payload = {
+      fare: newFare
+    }
+
+    await this._waitForShh()
+    return this.shh.post({
+      pubKey: otherPubKey, // pubKey of recipient
+      sig: this._shhIdentity, // sign it to prove it's from us
+      ttl: 10,
+      topic: this._shhTopics.newFare, // 4 bytes
+      payload: this.web3.utils.asciiToHex(JSON.stringify(payload)),
+      powTime: 3, // how long to maths
+      powTarget: 0.5 // how hard to maths
+    })
   }
 
   /**
@@ -419,15 +519,13 @@ class Taxicoin {
   _checkShhMessages () {
     return this.shh.getFilterMessages(this._shhFilter).then(messages => {
       for (let message of messages) {
-        switch (message.topic) {
-          case this._shhTopics.job:
+        const keys = Object.keys(this._shhTopics)
+
+        for (var key of keys) {
+          if (message.topic === this._shhTopics[key]) {
             message.body = JSON.parse(this.web3.utils.hexToAscii(message.payload))
-            this.emit('job', message)
-            break
-          case this._shhTopics.quote:
-            message.body = JSON.parse(this.web3.utils.hexToAscii(message.payload))
-            this.emit('quote', message)
-            break
+            this.emit(key, message)
+          }
         }
       }
     }).catch(error => {
@@ -571,12 +669,13 @@ class Taxicoin {
   _riderArrayToObject (riderArray) {
     return {
       addr: riderArray[0],
-      driver: riderArray[1],
-      fare: this.web3.utils.toBN(riderArray[2]),
-      deposit: this.web3.utils.toBN(riderArray[3]),
-      rating: riderArray[4].toNumber(),
-      ratingCount: this.web3.utils.toBN(riderArray[5]),
-      driverRating: riderArray[6].toNumber()
+      pubKey: riderArray[1],
+      driver: riderArray[2],
+      fare: this.web3.utils.toBN(riderArray[3]),
+      deposit: this.web3.utils.toBN(riderArray[4]),
+      rating: riderArray[5].toNumber(),
+      ratingCount: this.web3.utils.toBN(riderArray[6]),
+      driverRating: riderArray[7].toNumber()
     }
   }
 
