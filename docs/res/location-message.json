@@ -1,0 +1,6 @@
+{
+	"location": {
+		"lat": String,
+		"lon": String
+	}
+}

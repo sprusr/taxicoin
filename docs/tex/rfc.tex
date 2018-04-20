@@ -6,73 +6,131 @@ The protocol portion of Taxicoin is designed to be open. As such, anybody should
 
 Each of these methods is intended to be part of a smart contract. When one is called, it will modify the state of the contract, and/or return a value.
 
-The specified arguments are to be supplied when calling that function of the contract. The \textit{payable} keyword indicates that a method accepts a transaction with a currency value attached.
+The specified arguments are to be supplied when calling that function of the contract. The \textit{payable} keyword indicates that a method accepts a transaction with a currency value attached. In instances where the preconditions for a method are not met, the method will revert and the state will be unmodified.
 
 \subsubsection{Driver Advertise}
 
-\begin{description}
-	\item [Arguments] latitude; longitude; Whisper identity
-	\item [Payable] driver deposit value, defined in contract
+\begin{description}[leftmargin=8em,style=nextline]
+	\item [Description]
+		Takes a deposit from a driver and publishes their location and public key.
+	\item [Arguments]
+		Latitude: String \\
+		Longitude: String \\
+		Public Key: String
+	\item [Payable]
+		Driver deposit
+	\item [Preconditions]
+		User must not be currently on a journey, either as a driver or rider. Deposit must either have been already provided, or sent with this transaction.
+	\item [Postconditions]
+		The driver's location and public key are published, and the value of the deposit provided by the driver is recorded. If any deposit over the required amount was provided with the transaction, the excess is returned.
 \end{description}
-
-The advertise method takes a location and deposit (value as defined by the contract settings) from a driver and the contract publishes the location of the driver.
-
-If a deposit has not already been provided, and is not sent with the advertisement, an error is thrown. If deposit is sent, but has already been provided, the excess is returned and the method returns successfully.
 
 \subsubsection{Driver Advert Revoke}
 
-\begin{description}
-	\item [Arguments] none
-	\item [Payable] no
+\begin{description}[leftmargin=8em,style=nextline]
+	\item [Description]
+		Removes an active driver's advertisement.
+	\item [Arguments]
+		None
+	\item [Payable]
+		No
+	\item [Preconditions]
+		User must be advertised as a driver.
+	\item [Postconditions]
+		The driver is removed from the list of active drivers, indicating that riders should not send job proposals to this driver. The previously supplied deposit is not returned.
 \end{description}
-
-If an active advertisement exists, its state is set to invalid, indicating that riders should not consider this driver. Deposits are not returned as a result of this action.
 
 \subsubsection{Rider Create Journey}
 
-\begin{description}
-	\item [Arguments] driver address, fare
-	\item [Payable] fare plus rider deposit value, defined in contract
+\begin{description}[leftmargin=8em,style=nextline]
+	\item [Description]
+		Accepts a quoted fare for a journey as a rider and forms the rider's part of a contract between driver and rider. Intended to be called after an off-chain negotiation with \lstinline{job} and \lstinline{quot} messages.
+	\item [Arguments]
+		Driver Address: address \\
+		Fare: uint, value in \textit{wei} $n > 0$ \\
+		Public Key: String
+	\item [Payable]
+		Fare plus rider deposit
+	\item [Preconditions]
+		The user at the provided address must be an actively advertised driver, and not currently on a journey. The user calling this method must not be an actively advertised driver, nor be part of a journey as either rider or driver. The full rider deposit, plus an amount equal to the provided \lstinline{fare} must have been provided with this transaction.
+	\item [Postconditions]
+		The rider's intent to travel with the specified driver at the specified price is published. At this stage, the agreement is not binding until the driver accepts, before which the journey may be cancelled, with the rider deposit and fare being returned in full.
 \end{description}
 
-Accepts a quoted fare for a journey as a rider and forms contract between driver and rider, taking full fare plus deposit from rider.
+\subsubsection{Rider Cancel Journey}
 
-The contract is not complete until the driver formally accepts the job by calling the accept journey method. Before this happens, the journey may be cancelled with no adverse effect for the rider, with the fare and deposit being returned in full.
-
-This is intended to be called after an off-chain negotiation, with job proposal and quote messages.
+\begin{description}[leftmargin=8em,style=nextline]
+	\item [Description]
+		Cancels a journey which has not yet been accepted by a driver.
+	\item [Arguments]
+		None
+	\item [Payable]
+		No
+	\item [Preconditions]
+		Rider must be part of a journey, for which the driver has not already accepted.
+	\item [Postconditions]
+		The rider is removed from the journey. From this point it is no longer possible for the driver to accept the journey. The rider's deposit and fare are returned.
+\end{description}
 
 \subsubsection{Driver Accept Journey}
 
-\begin{description}
-	\item [Arguments] rider address
-	\item [Payable] no
+\begin{description}[leftmargin=8em,style=nextline]
+	\item [Description]
+		Formally accepts a job as a driver, committing both the rider and driver to its completion.
+	\item [Arguments]
+		Rider Address: address \\
+		Fare: uint, value in \textit{wei} $n > 0$
+	\item [Payable] 
+		No
+	\item [Preconditions]
+		Driver must be actively advertised and have provided the driver deposit. Rider must have formally created a journey with the driver set to the caller of this method, and the fare of equal value to the argument provided.
+	\item [Postconditions]
+		The driver is marked as being on a journey with the specified rider. From this point, the journey is considered to be in progress, and any attempt to change any aspect of the journey will require an agreement to be made between both rider and driver.
 \end{description}
-
-Formally accepts a job, committing both the rider and driver to its completion (or otherwise amicable resolution) at the stake of the fare and deposits.
-
-If the rider, as identified by the given address, has not initiated a journey contract, then the method will return an error.
 
 \subsubsection{Complete Journey}
 
-\begin{description}
-	\item [Arguments] none
-	\item [Payable] no
+\begin{description}[leftmargin=8em,style=nextline]
+	\item [Description]
+		Marks the current journey as completed, as either the rider or driver.
+	\item [Arguments]
+		Rating: uint8, $1 \leq n \leq 255$ with 255 being the \enquote{best}
+	\item [Payable] No
+	\item [Preconditions]
+		The caller of the method must either be a driver or rider who is currently on a journey.
+	\item [Postconditions]
+		The caller of the method is marked as having completed the journey, however they are still part of this journey until the other user has also called this method. The rating for the other user is stored. If the other party has already called this method, then the ratings for both parties are applied to their overall rating, and the journey is formally completed. The rider and driver deposits are returned, and the fare transferred to the driver. However, in cases where the fare is zero (only possible where the fare has been altered during a journey to indicate that the journey should be cancelled), the driver's deposit is not returned.
 \end{description}
 
-Marks the current journey as completed, as either the rider or driver. The journey will not be fully complete until both parties have called this method.
+\subsubsection{Driver Propose Fare Alteration}
 
-Once the journey is complete, the fare is paid from the contract to the driver, and deposits are returned to both parties.
-
-\subsubsection{Cancel Journey}
-
-\begin{description}
-	\item [Arguments] none
-	\item [Payable] no
+\begin{description}[leftmargin=8em,style=nextline]
+	\item [Description]
+		Formally proposes the alteration of the fare for a journey. Intended to be called after an off-chain negotiation with \lstinline{nfar} messages. % TODO: update with actual message topic.
+	\item [Arguments]
+		New Fare: uint, value in \textit{wei}
+	\item [Payable]
+		No
+	\item [Preconditions]
+		The user calling the method must be a driver, and currently be on a journey.
+	\item [Postconditions]
+		The driver's proposed new fare is recorded. The new fare does not take effect until the rider calls the \lstinline{Confirm Fare Alteration} method.
 \end{description}
 
-Proposes the cancellation of a journey, or in the case that the other party has already proposed a cancellation, accepts the proposal.
+\subsubsection{Rider Confirm Fare Alteration}
 
-The fare is returned from the contract to the rider, along with the rider's deposit. The driver's deposit is not returned.
+\begin{description}[leftmargin=8em,style=nextline]
+	\item [Description]
+		Confirms the alteration of the fare for a journey.
+	\item [Arguments]
+		New Fare: uint, value in \textit{wei}
+	\item [Payable]
+		Difference between old and new fares, if new is higher
+	\item [Preconditions]
+		The user calling the method must be currently on a journey. Driver must have previously agreed the same new fare with the \lstinline{Alter Fare} method. In the case that the new fare is higher, the difference must have been provided with this transaction.
+	\item [Postconditions]
+		The new value for the fare for the journey is recorded. In the case that the new fare is lower, the difference is returned to the rider. If the new fare is zero, the journey is considered to be cancelled - the journey may now be completed with the rider's deposit being returned, and no fare being paid to the driver.
+\end{description}
 
 \subsection{Messages}
 
@@ -82,32 +140,148 @@ Message topics are always a length of 4 bytes (4 ASCII characters), therefore an
 
 \subsubsection{Job Proposal}
 
-\begin{description}
-	\item [Topic] job
+\begin{description}[leftmargin=6em,style=nextline]
+	\item [Topic]
+		\lstinline{job}
+	\item [Purpose]
+		This message is sent by a rider to a prospective driver, indicating that they wish to make the described journey. It is intended to be sent to advertised drivers matching a specified criteria, e.g. within a certain distance, with at least a certain reputation.
+		
+		However the sending of these messages is not intended to be carried out manually by the user -- rather there is an automated process which fetches the list of active drivers and determines which to propose to.
+	\item [Response]
+		Should a driver be interested in a proposal, they respond with a quote message.
+	\item [Payload]
+		Please see below.
 \end{description}
-
-This message is sent by a rider to a prospective driver, indicating that they wish to make the described journey. It is intended to be sent to advertised drivers matching a specified criteria, e.g. within a certain distance, with at least a certain reputation. However the sending of these messages is not intended to be carried out manually by the user -- rather there is an automated process which fetches the list of active drivers and determines which to propose to.
-
-The payload consists of an ASCII string of a stringified JSON object containing \lstinline{pickup} and \lstinline{dropoff} locations, as well as the network (Ethereum) address of the rider.
 
 \lstinputlisting{res/job-message.json}
 
-Should a driver be interested in a proposal, they respond with a quote message.
-
 \subsubsection{Driver Quote}
 
-\begin{description}
-	\item [Topic] quot
+\begin{description}[leftmargin=6em,style=nextline]
+	\item [Topic]
+		\lstinline{quot}
+	\item [Purpose]
+		This message is sent by a driver as a response to a job proposal. It contains the network address of the driver, as well as the fare for which the driver is willing to take on the job. At this point, the quote is not binding.
+		
+		Quote messages with a fare of -1 are considered to be a rejection, indicating that the driver does not wish to accept this job.
+	\item [Response]
+		If the rider chooses to accept the quote, they next call the create journey method, and respond with a \lstinline{Journey Created} message.
+	\item [Payload]
+		Please see below.
 \end{description}
-
-This message is sent by a driver as a response to a job proposal. It contains the network address of the driver, as well as the fare for which the driver is willing to take on the job. At this point, the quote is not binding.
 
 \lstinputlisting{res/quote-message.json}
 
-If the rider chooses to accept the quote, they next call the create journey method.
+\subsubsection{Journey Created}
+
+\begin{description}[leftmargin=6em,style=nextline]
+	\item [Topic]
+		\lstinline{crea}
+	\item [Purpose]
+		This message is sent by a rider to a driver after they have created a journey. This is an indication that the rider has accepted the driver's quote.
+	\item [Response]
+		The driver should next call the \lstinline{Driver Accept Journey} method, and respond with a \lstinline{Journey Accepted} message.
+	\item [Payload]
+		Please see below.
+\end{description}
+
+\lstinputlisting{res/created-message.json}
+
+\subsubsection{Journey Accepted}
+
+\begin{description}[leftmargin=6em,style=nextline]
+	\item [Topic]
+		\lstinline{accp}
+	\item [Purpose]
+		This message is sent by a driver to a rider, after they have formally accepted the rider's journey, to indicate that both parties are now on a journey.
+	\item [Response]
+		None
+	\item [Payload]
+		Please see below.
+\end{description}
+
+\lstinputlisting{res/accepted-message.json}
+
+\subsubsection{Driver Location}
+
+\begin{description}[leftmargin=6em,style=nextline]
+	\item [Topic]
+		\lstinline{lctn}
+	\item [Purpose]
+		Sends the location of the driver to the rider with whom they are currently on a journey with. Allows the rider's client to display how far the driver is from the pickup location.
+	\item [Response]
+		None
+	\item [Payload]
+		Please see below.
+\end{description}
+
+\lstinputlisting{res/location-message.json}
+
+\subsubsection{Journey Completed}
+
+\begin{description}[leftmargin=6em,style=nextline]
+	\item [Topic]
+		\lstinline{cmpl}
+	\item [Purpose]
+		This message is sent to the other party when either one calls the \lstinline{Complete Journey} method. It indicates that the other should also (or dispute it). If the other party has already completed the journey, then this message indicates that the journey is fully complete.
+	\item [Response]
+		None
+	\item [Payload]
+		None
+\end{description}
+
+\subsubsection{Propose Fare Alteration}
+
+\begin{description}[leftmargin=6em,style=nextline]
+	\item [Topic]
+		\lstinline{nfar}
+	\item [Purpose]
+		This message is sent to the other party to indicate that the user wishes to alter the fare for the current journey.
+	\item [Response]
+		If the message is received by a driver for the first time, unprompted, they may either agree with the new proposed fare, and formally propose the new fare with the \lstinline{Propose Fare Alteration} method, or reject the new fare by sending a message of this type with an alternate fare.
+		
+		If the message is received by a driver for the second time, after agreeing to the proposed new fare, and the value in this message is unchanged, this indicates that the rider has called the \lstinline{Rider Confirm Fare Alteration} method, and the new fare has been applied. No further response is sent. However if the fare was changed, the driver may act as if this is the first such message (see above).
+		
+		If the message is received by a rider for the first time, unprompted, the rider may either agree to the new fare, and respond with a message of the same type with an unchanged value, or they may disagree and respond with their proposed new fare.
+		
+		If the message is received by a rider for the second time, after agreeing to the proposed new fare, and the value is unchanged, this indicates that the driver has called the \lstinline{Propose Fare Alteration} method, and that the rider should call the \lstinline{Rider Confirm Fare Alteration} method. They then respond with a message of this type, with the fare value unchanged.
+	\item [Payload]
+		Please see below.
+\end{description}
+
+\lstinputlisting{res/new-fare-message.json}
 
 \subsection{Process Flow Diagram}
 
+This describes the possible routes of interaction through the system.
+
 \begin{tikzpicture}[node distance=2cm]
-	\node (start) [startstop] {Start};
+	\node (driver-start) [startstop] {Driver Start};
+	\node (driver-advertise) [process, below of=driver-start] {Driver Advertise};
+	\node (driver-revoke) [startstop, right of=driver-advertise, xshift=2cm] {Revoke Advert};
+	\node (get-drivers) [process, below of=driver-advertise] {Rider Get Drivers};
+	\node (rider-start) [startstop, right of=get-drivers, xshift=2cm] {Rider Start};
+	\node (propose-job) [process, below of=get-drivers] {Rider Propose Job};
+	\node (accept-job-dec) [decision, below of=propose-job, yshift=-0.4cm] {Driver take job?};
+	\node (driver-reject) [process, right of=accept-job-dec, xshift=2cm] {Driver Reject};
+	\node (driver-quote) [process, below of=accept-job-dec, yshift=-0.3cm] {Driver Quote Fare};
+	\node (accept-fare-dec) [decision, below of=driver-quote, yshift=-0.5cm] {Rider accept fare?};
+	\node (rider-reject) [process, right of=accept-fare-dec, xshift=2cm] {Rider Reject Fare};
+	\node (create-journey) [process, below of=accept-fare-dec, yshift=-0.4cm] {Rider Create Journey};
+	\node (accept-journey) [process, below of=create-journey] {Driver Accept Journey};
+	\node (journey) [process, below of=accept-journey] {Journey};
+	
+	\draw [arrow] (driver-start) -- (driver-advertise);
+	\draw [arrow] (driver-advertise) -- (driver-revoke);
+	\draw [arrow] (driver-advertise) -- (get-drivers);
+	\draw [arrow] (rider-start) -- (get-drivers);
+	\draw [arrow] (get-drivers) -- (propose-job);
+	\draw [arrow] (propose-job) -- (accept-job-dec);
+	\draw [arrow] (accept-job-dec) -- (driver-quote);
+	\draw [arrow] (accept-job-dec) -- (driver-reject);
+	\draw [arrow] (driver-quote) -- (accept-fare-dec);
+	\draw [arrow] (accept-fare-dec) -- (create-journey);
+	\draw [arrow] (accept-fare-dec) -- (rider-reject);
+	\draw [arrow] (create-journey) -- (accept-journey);
+	\draw [arrow] (accept-journey) -- (journey);
 \end{tikzpicture}

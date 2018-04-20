@@ -1,5 +1,68 @@
 \section{Implementation}
 
-My implementation is in two parts: that of the protocol described above, and additionally an example \textit{Web3} client.
+My implementation is in two parts: that of the protocol described above, and additionally an example \textit{Web3} client. The protocol itself is split between peer-to-peer communication and smart contract methods.
 
-% TODO: describe implementation!
+The entire implementation of the Taxicoin protocol and client is contained within one git repository. The directory structure is defined by a combination of \lstinline{vue-webpack}[cite] and \lstinline{truffle}[cite], both of which have strong opinions. % TODO: cite
+
+\subsection{Smart Contract}
+
+As previously discussed, Ethereum smart contracts are self-contained programs which execute on the Ethereum Virtual Machine (EVM). The core of Taxicoin is implemented as a contract, allowing riders and drivers to interact with one and other with it as an intermediary.
+
+The contract is centred around state, which can be divided into three parts: the state of the Taxicoin network, the state of a driver, and the state of a rider.
+
+\subsubsection{Network State}
+
+When a contract is deployed, various parts of it may be initialised, in a similar way to how the constructor of a class initialises the state of an object. In Taxicoin, only the driver and rider deposit values are set at this stage.
+
+Two key mappings are kept: one which maps an address to a driver, and one which maps an address to a rider. There is additionally a third mapping used to implement a double-linked list (DLL), discussed below.
+
+There is also a \lstinline{UserType} enum, which is used as a return type for the \lstinline{getUserType} helper function. This is an easy method of determining the current \enquote{mode} of a user based on the state of their \lstinline{Driver} and \lstinline{Rider} objects (described in more detail below).
+
+\lstinputlisting[language=Solidity]{res/user-type-enum.sol}
+
+\subsubsection{Driver State}
+
+An individual driver is represented by a \lstinline{Driver} struct:
+
+\lstinputlisting[language=Solidity]{res/driver-struct.sol}
+
+When a user first wishes to become a driver, a \lstinline{Driver} object will not exist for them\footnotemark, and they will have to call the \lstinline{driverAdvertise} method, providing their current latitude, longitude, Whisper public key (used for peer-to-peer communication), and a deposit. If the deposit provided is sufficient, then the driver's state will be updated.
+
+\footnotetext{Rather, the mapping will return a Driver object with all zero values.}
+
+This consists of setting the address of the driver on the object (used as an integrity check - the address of an advertised driver should map to a \lstinline{Driver} object with the same address), the latitude and longitude, the time at which the driver was last updated (used to detect stale advertisements), the deposit provided by the driver (for cases where the global driver deposit value may change, the amount provided when the driver initially advertised is what will be returned), and the driver's public key (used for contacting this driver via Whisper). Additionally, if the driver is not already advertised, their address is added to the DLL.
+
+Just as the address of a \lstinline{Driver} object is used to check integrity, it is also used to indicate whether a driver is currently advertised or not. Any user should be able to view information about a driver at any time, and the overall rating of a driver needs to be stored even while a driver is not advertised. Therefore, this data is kept, and can be accessed via the \lstinline{drivers} map. However, if the address does not match, this indicates that the driver is not currently advertised.
+
+To mark a driver as not active, they are removed from the DLL and their address set to zero. To mark a driver as on a journey, they are removed from the DLL and their rider is set to a non-zero address. The advantage of this state-based approach to determining the mode of a driver is that we do not have to explicitly store and update a separate indicator.
+
+\subsubsection{Rider State}
+
+An individual rider is represented by a \lstinline{Rider} struct:
+
+\lstinputlisting[language=Solidity]{res/rider-struct.sol}
+
+A rider's rating and rating count are kept between journeys, but otherwise, all remaining fields are empty when the rider is not part of a journey. As with a driver, the \lstinline{addr} field is used to determine whether a rider is active. To determine whether the driver is locked into a journey, we look up the driver in the \lstinline{drivers} mapping, using the given address. If their rider field is set to the address of this rider, then both users are locked into a rider together.
+
+\subsubsection{Double Linked List}
+
+As Solidity is still a relatively young language, many features which one would expect from a more mature language are missing. This includes dynamic-length lists, which posed an issue early in the development of Taxicoin. The most common implementation of dynamic lists is to use a linked-list, therefore I chose this as my implementation in Solidity\footnotemark.
+
+Specifically, I decided to use a double linked list, as modifying operations on the list are likely be performed on only a single element at a time, therefore to link to the next and previous item in the list is not much more of a cost. The provides the benefit of not having to scan forward to move backwards in the list, particularly useful for pagination, which will likely be needed when a large number of drivers are advertised and a user wishes to manually review potential drivers.
+
+The contract uses a mapping which maps driver addresses to another map, which in turn maps a boolean to an address. The boolean represents whether we want to look up the next or previous element in the list - false is the previous, and true is the next. This then returns the address to use to look up the \lstinline{Driver} object in the drivers mapping.
+
+\footnotetext{The ultimate implementation was based on \cite{DLL}.}
+
+\subsubsection{Journeys}
+
+% TODO: how creating a journey affects state of rider and driver + links rider and driver 1-to-1
+% TODO: how end of a journey happens
+
+\subsection{Client Library}
+
+Todo.
+
+\subsection{Example Client}
+
+Todo.
