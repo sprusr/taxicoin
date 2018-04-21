@@ -1,4 +1,4 @@
-\documentclass[10pt,a4paper]{article}
+\documentclass[11pt,a4paper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{tabularx}
 \usepackage{enumitem}
@@ -16,7 +16,7 @@
 \definecolor{darkgray}{rgb}{.4,.4,.4}
 \definecolor{purple}{rgb}{0.65, 0.12, 0.82}
 \lstdefinelanguage{JavaScript}{
-  keywords=[1]{typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
+  keywords=[1]{typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break, const, let, await, async},
   keywordstyle=[1]\color{blue}\bfseries,
   keywords=[2]{String, Integer},
   keywordstyle=[2]\color{blue}\bfseries,
@@ -86,6 +86,8 @@
 % TODO: write the abstract
 \abstract{Taxicoin is a decentralised ride-sharing protocol, developed with openness and fairness in mind, and built on Ethereum. This dissertation details the background to the problems Taxicoin attempts to solve, as well as an explanation of the Ethereum network. It then describes the protocol itself, how it has been implemented, and what steps have been taken to ensure the security, reliability and effectiveness of the implementation.}
 
+\pagebreak
+
 \tableofcontents
 
 \pagebreak
@@ -109,5 +111,7 @@
 \input{tex/appendix/project-definition}
 \pagebreak
 \input{tex/appendix/tp1-progress-review}
+%\pagebreak
+%\input{tex/appendix/code-listings}
 
 \end{document}

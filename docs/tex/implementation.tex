@@ -1,6 +1,6 @@
 \section{Implementation}
 
-My implementation is in two parts: that of the protocol described above, and additionally an example \textit{Web3} client. The protocol itself is split between peer-to-peer communication and smart contract methods.
+My implementation is in two parts: that of the protocol described above, and additionally an example \textit{Web3} client. The protocol itself is split between peer-to-peer communication and smart contract methods. P2P messages are handled entirely outside of the contract, and in this implementation are sent by the client library via the Whisper protocol on the Ethereum network.
 
 The entire implementation of the Taxicoin protocol and client is contained within one git repository. The directory structure is defined by a combination of \lstinline{vue-webpack}[cite] and \lstinline{truffle}[cite], both of which have strong opinions. % TODO: cite
 
@@ -56,12 +56,64 @@ The contract uses a mapping which maps driver addresses to another map, which in
 
 \subsubsection{Journeys}
 
-% TODO: how creating a journey affects state of rider and driver + links rider and driver 1-to-1
-% TODO: how end of a journey happens
+Building on the idea of rider and driver state, there is no concrete \textit{journey} object in this Taxicoin implementation. Rather, the concept of a journey is inferred from the state of the participants.
+
+When observing a rider, if the \lstinline{driver} property is set, this indicates that the driver is either on a journey with that driver, or has created the journey and is waiting for the driver to accept. Whether the driver has accepted or not can be determined by observing the driver's \lstinline{rider} property. If it is set the address of the rider, then the driver has accepted the journey and both are formally part of the same journey. If the driver's rider address is blank, they have not yet accepted the journey, and if it is the address of another rider, then they have effectively declined the journey with this rider and have chosen to accept another rider's journey.
+
+At the end of a journey, both parties call the \lstinline{Complete Journey} method, which will record the rating to be given to the other. This is stored in the rider/driver object for the user, and additionally acts as an indication as to whether the user has already called the method. This is then used by the method to determine whether to finalise the completion of the journey.
+
+When both parties have completed the journey, the ratings given are applied (recalculate average rating, and increment rating count), deposits returned, and the fare paid to the driver. The state of both is then reset -- their own addresses and those pointing to the other are set to zero, the ratings to be given to the other are set to zero, and the recorded values for the deposits are fare are set to zero.
+
+% TODO: code example
+
+\subsubsection{Integrity Checks}
+
+As this implementation is heavily based on the state of objects within the contract, it is important to maintain data integrity. Coupled with the immutability of smart contracts, if we do not ensure that our contract state is kept correctly, it may be impossible to recover from a situation where the state is altered in some unexpected way.
+
+A key feature of Solidity which allows us to check certain pre- and post-conditions is the use of \lstinline{require();}. In the case that the contained statement evaluates to false, execution will halt and any changes made to the state of the contract instance are reverted.
+
+For example, the protocol specification states that when a driver advertises, they must first be required to pay a deposit. Additionally, they may not already be on a journey as either a driver or rider. To check these post-conditions we can use the following Solidity code:
+
+\begin{lstlisting}[language=Solidity]
+// check the driver has paid deposit
+require(drivers[msg.sender].deposit >= driverDeposit || msg.value >= driverDeposit);
+
+// must not be ActiveDriver or Rider
+require(getUserType(msg.sender) != UserType.ActiveDriver);
+require(getUserType(msg.sender) != UserType.Rider);
+\end{lstlisting}
+
+This is also useful for performing \enquote{safe math}, where we want to protect against overflow or underflow. In both of these cases, integers in Solidity will simply wrap-around, which, particularly when dealing with currency as is the case much of the time in Solidity, can be catastrophically bad. Although it may not always be possible to recover from a situation where over- or underflow would occur, we can use \lstinline{require} to check if the resulting value has been a result of such an occurrence, and revert the state of the contract instance.
 
 \subsection{Client Library}
 
-Todo.
+While the contract handles the state of Taxicoin, it can be unwieldy to interact with. It also only implements part of the Taxicoin protocol, not including any of the off-chain, peer-to-peer interactions.
+
+The JavaScript client library is what really opens up the potential ecosystem of applications using the Taxicoin protocol. The aim was for it to be as simple to use and integrate into other people's projects as possible, and ideally should hide as much of the complexity of interacting with an Ethereum smart contract as possible.
+
+The client library exposes a class, which when instantiated sets up all of the common requirements for using the Taxicoin protocol in most cases.
+
+\subsubsection{Web3 Interaction}
+
+The JavaScript library used for interacting with the Ethereum blockchain is called \lstinline{Web3.js}[cite], and acts as a layer for sending commands to an Ethereum network node which computes transactions and relays them to the network.
+
+This is coupled with the \lstinline{truffle-contract} library, which abstracts the logic for calling methods of a smart contract, and provides each one as an asynchronous JavaScript method. These in turn interact with a Web3 library instance. The typical code\footnotemark for calling a contract method is as follows:
+
+\footnotetext{In ES6 async/await function syntax.}
+
+\begin{lstlisting}
+const instance = await this.contract.deployed()
+const account = await this.getAccount()
+const tx = await instance.methodToCall([arguments, ]{from: account[, otherOptions})
+\end{lstlisting}
+
+\lstinline{this.contract} is a \lstinline{TruffleContract} instance which points to the Taxicoin contract code. Calling the \lstinline{deployed} method on that returns a wrapper with a reference to a deployed instance of the contract on the current network. From this, we can then call the methods of the deployed contract.
+
+The \lstinline{getAccount} method fetches the Ethereum address of the user, as defined when instantiating a Taxicoin library instance. This is then required to be passed as an option with any contract method calls which modify state, as it is used to identify the user when signing the transaction.
+
+\subsubsection{Peer to Peer Messages}
+
+The other key purpose of the client library is to facilitate the sending of peer-to-peer Taxicoin protocol messages. This is done with Whisper, one of the protocols part of the Ethereum network.
 
 \subsection{Example Client}
 
