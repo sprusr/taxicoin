@@ -132,6 +132,78 @@ The specified arguments are to be supplied when calling that function of the con
 		The new value for the fare for the journey is recorded. In the case that the new fare is lower, the difference is returned to the rider. If the new fare is zero, the journey is considered to be cancelled - the journey may now be completed with the rider's deposit being returned, and no fare being paid to the driver.
 \end{description}
 
+\subsubsection{Get Driver}
+
+\begin{description}[leftmargin=8em,style=nextline]
+	\item [Description]
+		Returns the details of the driver at the given address.
+	\item [Arguments]
+		Driver Address: address
+	\item [Payable]
+		No
+	\item [Preconditions]
+		None
+	\item [Postconditions]
+		If the address provided is of a user who has previously (or is currently) advertised as a driver, the details of the driver will be returned.
+		
+		Otherwise, all zero-values will be returned.
+\end{description}
+
+\subsubsection{Get Next Driver}
+
+\begin{description}[leftmargin=8em,style=nextline]
+	\item [Description]
+		Returns the details of the driver next in the list of advertised drivers after the given address.
+	\item [Arguments]
+		Driver Address: address
+	\item [Payable]
+		No
+	\item [Preconditions]
+		None
+	\item [Postconditions]
+		If the address provided is of a user who has previously (or is currently) advertised as a driver, the details of the next driver in the list will be returned.
+		
+		If the zero-address (\lstinline{0x0}) is provided, the first driver in the list is returned.
+		
+		If the address provided is for the last driver in the list, the zero-address is returned.
+\end{description}
+
+\subsubsection{Get Previous Driver}
+
+\begin{description}[leftmargin=8em,style=nextline]
+	\item [Description]
+		Returns the details of the driver previous in the list of advertised drivers after the given address.
+	\item [Arguments]
+		Driver Address: address
+	\item [Payable]
+		No
+	\item [Preconditions]
+		None
+	\item [Postconditions]
+		If the address provided is of a user who has previously (or is currently) advertised as a driver, the details of the previous driver in the list will be returned.
+		
+		If the zero-address (\lstinline{0x0}) is provided, the last driver in the list is returned.
+		
+		If the address provided is for the first driver in the list, the zero-address is returned.
+\end{description}
+
+\subsubsection{Get Rider}
+
+\begin{description}[leftmargin=8em,style=nextline]
+	\item [Description]
+		Returns the details of the rider at the given address.
+	\item [Arguments]
+		Rider Address: address
+	\item [Payable]
+		No
+	\item [Preconditions]
+		None
+	\item [Postconditions]
+		If the address provided is of a user who has previously used (or is currently using) the system as a rider, the details of the rider will be returned.
+		
+		Otherwise, all zero-values will be returned.
+\end{description}
+
 \subsection{Messages}
 
 Driver and rider user clients should be listening for the following messages, where applicable. These messages are communicated via the Whisper protocol.
@@ -250,6 +322,12 @@ Message topics are always a length of 4 bytes (4 ASCII characters), therefore an
 \end{description}
 
 \lstinputlisting{res/new-fare-message.json}
+
+\subsection{Contract Solidity Interface}
+
+The above methods can be translated to a Solidity interface, which should be conformed to for all Ethereum-based contracts implementing the Taxicoin protocol. This aids the goal of creating an open ecosystem as, in theory, if all implementations conform to this standard, any client should be able to work with any contract implementation.
+
+\lstinputlisting[language=Solidity]{../contracts/TaxicoinInterface.sol}
 
 \subsection{Process Flow Diagram}
 

@@ -1,6 +1,9 @@
 pragma solidity ^0.4.14;
 
-contract Taxicoin {
+import "./TaxicoinInterface.sol";
+
+contract Taxicoin is TaxicoinInterface {
+
 	struct Driver {
 		address addr;
 		string lat;
@@ -25,13 +28,6 @@ contract Taxicoin {
 		uint8 rating;
 		uint ratingCount;
 		uint8 driverRating;
-	}
-
-	enum UserType {
-		None,
-		Driver,
-		ActiveDriver,
-		Rider
 	}
 
 	mapping(address => Driver) public drivers;
@@ -286,4 +282,5 @@ contract Taxicoin {
 		delete dllDriverIndex[addr][PREV];
 		delete dllDriverIndex[addr][NEXT];
 	}
+
 }
