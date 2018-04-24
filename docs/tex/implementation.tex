@@ -8,7 +8,7 @@ The entire implementation of the Taxicoin protocol and client is contained withi
 
 As previously discussed, Ethereum smart contracts are self-contained programs which execute on the Ethereum Virtual Machine (EVM). The core of Taxicoin is implemented as a contract, allowing riders and drivers to interact with one and other with it as an intermediary.
 
-The contract is centred around state, which can be divided into three parts: the state of the Taxicoin network, the state of a driver, and the state of a rider.
+The contract is centred around state, which can be divided into three parts: the state of the Taxicoin network, the state of a driver, and the state of a rider. It conforms to the \lstinline{TaxicoinInterface} contract interface, as defined in the protocol specification.
 
 \subsubsection{Network State}
 
@@ -16,7 +16,7 @@ When a contract is deployed, various parts of it may be initialised, in a simila
 
 Two key mappings are kept: one which maps an address to a driver, and one which maps an address to a rider. There is additionally a third mapping used to implement a double-linked list (DLL), discussed below.
 
-There is also a \lstinline{UserType} enum, which is used as a return type for the \lstinline{getUserType} helper function. This is an easy method of determining the current \enquote{mode} of a user based on the state of their \lstinline{Driver} and \lstinline{Rider} objects (described in more detail below).
+There is also a \lstinline{UserType} enum from the contract interface, which is used as a return type for the \lstinline{getUserType} helper function. This is an easy method of determining the current \enquote{mode} of a user based on the state of their \lstinline{Driver} and \lstinline{Rider} objects (described in more detail below).
 
 \lstinputlisting[language=Solidity]{res/user-type-enum.sol}
 
@@ -46,13 +46,15 @@ A rider's rating and rating count are kept between journeys, but otherwise, all 
 
 \subsubsection{Double Linked List}
 
-As Solidity is still a relatively young language, many features which one would expect from a more mature language are missing. This includes dynamic-length lists, which posed an issue early in the development of Taxicoin. The most common implementation of dynamic lists is to use a linked-list, therefore I chose this as my implementation in Solidity\footnotemark.
+As Solidity is still a relatively young language, some features which one would expect from a more mature language are missing. This includes the ability to return dynamic-length lists from a method, which posed an issue early in the development of Taxicoin. Although it's possible to return a single element at a time, this requires keeping a separate cursor for which element should be next. Therefore we instead use a novel implementation of a double-linked-list, which allows us to use the address of the current driver as the cursor to fetch the next or previous\footnotemark.
 
-Specifically, I decided to use a double linked list, as modifying operations on the list are likely be performed on only a single element at a time, therefore to link to the next and previous item in the list is not much more of a cost. The provides the benefit of not having to scan forward to move backwards in the list, particularly useful for pagination, which will likely be needed when a large number of drivers are advertised and a user wishes to manually review potential drivers.
+\footnotetext{The ultimate implementation was based on \cite{DLL}.}
+
+Modifying operations on the list are likely be performed on only a single element at a time, therefore to link to the next and previous item in the list is not much more of a cost. This provides the benefit of not having to scan forward to move backwards in the list, particularly useful for pagination, which will likely be needed when a large number of drivers are advertised and a user wishes to manually review potential drivers.
 
 The contract uses a mapping which maps driver addresses to another map, which in turn maps a boolean to an address. The boolean represents whether we want to look up the next or previous element in the list - false is the previous, and true is the next. This then returns the address to use to look up the \lstinline{Driver} object in the drivers mapping.
 
-\footnotetext{The ultimate implementation was based on \cite{DLL}.}
+This list is easily interfaced with using the \lstinline{getNextDriver} and \lstinline{getPreviousDriver} methods, as defined in the contract interface. These features of the protocol were in fact partly designed this way due to the limitation as described above, that solidity does not support returning dynamic-length lists from methods.
 
 \subsubsection{Journeys}
 

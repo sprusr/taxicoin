@@ -1,23 +1,123 @@
 \section{Verification and Validation}
 
+As Taxicoin is intended to be a ubiquitous, maintenance-free, and open protocol, it is extremely important that implementations correctly conform to the standard, and that they are without issues. If, for example, one widely used implementation featured an incorrectly implemented method with unexpected side-effects, it could impact on the whole network of Taxicoin clients and contracts.
+
 \subsection{Verification}
 
 % Are we building the product right?
 % Compare with protocol specification
 
+In order to ensure this implementation of Taxicoin meets the protocol specification, various methods of verification have been used.
+
+A series of functional integration tests verify the overall ability of the client library to interact with the smart contract instance, while conforming to the protocol specification.
+
+Unit testing has also been performed on the smart contract itself to check the various pre- and post-conditions of each protocol method, as well as any additional internal methods not defined in the protocol.
+
+Finally, a static analysis tool has been applied on the smart contract to check for common Solidity implementation errors.
+
 \subsubsection{Functional Tests}
 
 % Integration tests, based on protocol specification
+
+The functional integration tests use the \textit{Ganache} [cite] tool to emulate a blockchain, on which we deploy the Taxicoin contract. The framework used for testing is Mocha [cite], along with the Chai [cite] assertion library. The tests are orchestrated by Karma [cite], which transpiles the JavaScript library and launches a Google Chrome browser instance in which to run the tests. Before each test, the state of the Taxicoin contract is reset, and a new Taxicoin library instance is constructed for use. These are then cleaned up in the after hook.
+
+% TODO: test case examples
+
+Each test group is based around one of the methods or messages, as described in the protocol specification. With the methods, we can easily construct each individual test scenario based on the pre- and post-conditions.
+
+% TODO: something about coverage
+
+These tests ensure the technical requirements, as defined in the protocol specification, are met.
 
 \subsubsection{Unit Tests}
 
 % Unit tests on contract
 
+As mentioned previously, Solidity is still a fairly immature language, however related tooling does exist for running unit tests. The Truffle framework [cite] provides a Solidity-based testing tool, with standard assertions.
+
+Unit tests have been used with Taxicoin to ensure that the contract (written in Solidity) performs the implemented functionality as expected. Each test case calls certain methods within the contract, given certain pre-conditions, and checks that the resulting state of the contract is as expected. An example test case is given below.
+
+\begin{lstlisting}[language=Solidity]
+contract TestTaxicoin {
+  ...
+  function testDriverAdvertise() public {
+    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
+
+    string memory lat = "1.23";
+    string memory lon = "50.67";
+    string memory pubKey = "<pub_key_goes_here>";
+
+    uint driverDeposit = tc.driverDeposit();
+    tc.driverAdvertise.value(driverDeposit)(lat, lon, pubKey);
+
+    FetchedDriver memory dr = getDriver(tc, tx.origin);
+
+    Assert.equal(dr.addr, tx.origin, "driver addr should equal address of sender");
+    Assert.equal(dr.lat, lat, "driver lat should equal advertised lat");
+    Assert.equal(dr.lon, lon, "driver lon should equal advertised lon");
+    Assert.equal(dr.pubKey, pubKey, "driver pubKey should equal advertised pubKey");
+    Assert.equal(dr.updated, block.timestamp, "driver updated should equal block timestamp");
+    Assert.equal(dr.deposit, driverDeposit, "driver deposit should equal global driver deposit");
+  }
+  ...
+}
+\end{lstlisting}
+
+% TODO: test case examples
+
 \subsubsection{Static Analysis}
 
 % Using manticore
+
+The Solidity static analysis tool \textit{Manticore} has been used to check for common Solidity programmer faults. This is done through a series of input generation for \enquote{inputs that trigger unique code paths}, as well as crash discovery of \enquote{inputs that crash programs via memory safety violations}.
+
+Additionally, it is able to detect common unexpected cases such as integer overflow. As an example, if a contract featured some method for withdrawing funds and the amount to withdraw was calculated based on the addition user input, the user may be able to cause an overflow, and cause the amount to be withdrawn to be incorrect, resulting in a loss of funds.
+
+This static analysis is yet another method for ensuring that the Taxicoin protocol can act entirely autonomously, without fault, in what should be assumed as a hostile environment.
 
 \subsection{Validation}
 
 % Are we building the right product?
 % Compare with requirements
+
+The above verification methods confirm that the technical specification for the project is met, however they do not provide a sense for whether the functional requirements of the project have been satisfied. The only way we can do this is to check each one individually.
+
+Based on the below comparisons between functional requirements and implemented features, this implementation of the Taxicoin protocol satisfies all original core requirements, and also some of the additional requirements.
+
+\subsubsection*{Drivers must be required to pay a deposit in order to advertise}
+
+When advertising, if a driver does not provide funds of an amount greater than or equal to the contract-defined driver deposit value, then the contract will revert and throw an error. Therefore, this requirement is met.
+
+\subsubsection*{Riders must advertise jobs to drivers on an individual basis}
+
+An index of advertised drivers is available for all to see, including the public key of each, allowing a rider to send a \lstinline{Job Proposal} message via Whisper. There is no public listing of proposed jobs, and therefore rider privacy is not compromised. This meets the requirement.
+
+\subsubsection*{The fare must be determined by quotes from driver}
+
+When a driver receives a job proposal, they choose whether or not to accept it, and what fare they which to charge. This allows the driver to decide to adjust a fare based on the circumstances (e.g. congestion, distance). This requirement is met.
+
+\subsubsection*{Riders must pay fares to a contract in advance}
+
+When a rider formally creates a journey on-chain, they must provided at least the stated fare (plus deposit, see below) with the transaction or the transaction will fail. Additionally, when a driver then formally accepts the journey on-chain, they provided a value representing what they are expecting the fare to be, and if the rider's provided fare does not match, the transaction will fail. This is a security measure to prevent riders from tricking drivers. Both of these factors satisfy the requirement.
+
+\subsubsection*{Riders must provide an additional deposit before starting a journey}
+
+When formally creating a journey on-chain, a rider must provide funds greater than or equal to the stated fare (value passed as an argument), plus the contract-defined driver deposit, or the transaction will revert and throw an error. This meets the requirement.
+
+\subsubsection*{Riders and drivers must both rate the other on completion of a journey}
+
+The complete journey method requires a rating between 1 and 255 to be passed as an argument, or the method will not execute. Until this is called, both parties are unable to retrieve their deposits, and the driver is not paid their fare. This mutual stake ensures that it is in both party's interests to complete the journey with ratings. Therefore this requirement is met.
+
+\subsubsection*{When a journey is completed, deposits should be returned to the respective parties, and the fare paid to the driver}
+
+On the completion of a journey (once both parties have called the complete journey method), the deposits paid by either party are returned and the fare is paid to the driver. This satisfies the requirement.
+
+\subsubsection*{Prospective drivers and riders should be able to informally communicate before forming a contract (additional requirement)}
+
+This additional requirement was not implemented as it was not deemed essential, but would be in a future protocol revision.
+
+\subsubsection*{Dispute resolution should be built into the system (additional requirement)}
+
+If the driver and rider have a disagreement during the journey, they are able to propose a new fare to the other party, initiating a negotiation over the new fare, performed peer-to-peer via Whisper with \lstinline{Propose Fare Alteration} messages. When an agreement is met (both parties propose the same fare), the driver formally proposed the new fare on-chain, and the rider formally accepts it. If the new fare is higher, the rider must provide the difference with the transaction, otherwise the difference is returned to the rider.
+
+Additionally, if the rider believes the driver has not provided the promised service, they may wish to entirely cancel the journey and pay have their fare returned. This can be achieved by setting a fare of zero. The journey may then be completed. This thoroughly meets the requirement.

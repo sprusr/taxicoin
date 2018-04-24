@@ -132,6 +132,21 @@ The specified arguments are to be supplied when calling that function of the con
 		The new value for the fare for the journey is recorded. In the case that the new fare is lower, the difference is returned to the rider. If the new fare is zero, the journey is considered to be cancelled - the journey may now be completed with the rider's deposit being returned, and no fare being paid to the driver.
 \end{description}
 
+\subsubsection{Get User Type}
+
+\begin{description}[leftmargin=8em,style=nextline]
+	\item [Description]
+		Returns an integer representing the type of user at the provided address.
+	\item [Arguments]
+		User Type: uint8
+	\item [Payable]
+		No
+	\item [Preconditions]
+		None
+	\item [Postconditions]
+		Returns an integer between 0 and 3, representing the enum $\{ None, Driver, ActiveDriver, Rider \}$.
+\end{description}
+
 \subsubsection{Get Driver}
 
 \begin{description}[leftmargin=8em,style=nextline]
@@ -327,7 +342,7 @@ Message topics are always a length of 4 bytes (4 ASCII characters), therefore an
 
 The above methods can be translated to a Solidity interface, which should be conformed to for all Ethereum-based contracts implementing the Taxicoin protocol. This aids the goal of creating an open ecosystem as, in theory, if all implementations conform to this standard, any client should be able to work with any contract implementation.
 
-\lstinputlisting[language=Solidity]{../contracts/TaxicoinInterface.sol}
+\lstinputlisting[language=Solidity]{../contracts/ITaxicoin.sol}
 
 \subsection{Process Flow Diagram}
 
