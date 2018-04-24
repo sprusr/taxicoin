@@ -83,7 +83,7 @@ export default {
       })
     },
     acceptContract (index) {
-      this.$tc.driverAcceptJourney(this.jobs[index].body.address).then(() => {
+      this.$tc.driverAcceptJourney(this.jobs[index].body.address, 100).then(() => {
         console.log('journey is happening!')
       })
     },

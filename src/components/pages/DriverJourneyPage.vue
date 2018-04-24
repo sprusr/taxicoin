@@ -31,13 +31,13 @@ export default {
     Modal
   },
   mounted () {
-    this.$tc.driverGetJourney().then(journey => {
+    this.$tc.getJourney().then(journey => {
       this.journey = journey
     })
   },
   methods: {
     completeJourney () {
-      this.$tc.driverCompleteJourney(5).then(() => {
+      this.$tc.completeJourney(5).then(() => {
         console.log('journey marked as complete')
       })
     }

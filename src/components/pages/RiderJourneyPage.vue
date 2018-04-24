@@ -31,13 +31,14 @@ export default {
     Modal
   },
   mounted () {
-    this.$tc.riderGetJourney().then(journey => {
+    this.$tc.getJourney().then(journey => {
       this.journey = journey
     })
   },
   methods: {
     completeJourney () {
-      this.$tc.riderCompleteJourney(5).then(() => {
+      console.log('doing')
+      this.$tc.completeJourney('5').then(() => {
         console.log('journey completed!')
       })
     }
