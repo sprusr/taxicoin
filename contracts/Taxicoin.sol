@@ -84,14 +84,14 @@ contract Taxicoin is ITaxicoin {
 		// check the deposit + fare have been paid
 		require(msg.value >= riderDeposit + fare);
 
-		// check the passenger is not already on a journey
-		require(riders[tx.origin].driver == address(0));
+		// check user is not already a rider or driver
+		require(getUserType(tx.origin) == USERTYPE_NONE);
 
 		// check driver is not the zero address
 		require(driver != address(0));
 
 		// check the driver is advertised
-		require(drivers[driver].addr == driver);
+		require(getUserType(driver) == USERTYPE_ACTIVEDRIVER);
 
 		// set the rider's deposit, fare and pubKey
 		riders[tx.origin].deposit = riderDeposit;
