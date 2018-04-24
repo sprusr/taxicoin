@@ -313,12 +313,12 @@ class Taxicoin {
   /**
    * Todo.
    */
-  async driverAcceptJourney (riderAddress) {
+  async driverAcceptJourney (riderAddress, fare) {
     const instance = await this.contract.deployed()
     const account = await this.getAccount()
     const rider = await this.getRider(riderAddress)
 
-    const tx = await instance.driverAcceptJourney(riderAddress, {from: account})
+    const tx = await instance.driverAcceptJourney(riderAddress, fare, {from: account})
 
     const payload = {
       address: account
@@ -368,11 +368,15 @@ class Taxicoin {
     const instance = await this.contract.deployed()
     const account = await this.getAccount()
     const journey = await this.getJourney()
+    const userType = await this.getUserType(account)
 
     const tx = await instance.completeJourney(rating, {from: account})
 
+    console.log('still', tx)
+
     let otherPubKey
-    if (this.getUserType() === Taxicoin.RIDER) {
+    console.log('aand', userType)
+    if (userType === Taxicoin.RIDER) {
       otherPubKey = journey.driver.pubKey
     } else {
       otherPubKey = journey.rider.pubKey
@@ -394,9 +398,11 @@ class Taxicoin {
 
   async proposeNewFare (newFare) {
     const journey = await this.getJourney()
+    const account = await this.getAccount()
+    const userType = await this.getUserType(account)
 
     let otherPubKey
-    if (this.getUserType() === Taxicoin.RIDER) {
+    if (userType === Taxicoin.RIDER) {
       otherPubKey = journey.driver.pubKey
     } else {
       otherPubKey = journey.rider.pubKey
