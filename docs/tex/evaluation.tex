@@ -1,3 +1,23 @@
 \section{Evalutation}
 
-Todo.
+This final sections acts as an evaluation of the success of the Taxicoin project, both as a protocol and an implementation.
+
+\subsection{Impact}
+
+The premise of this entire project was that traditional taxi travel can be an unfair experience, and that riders and drivers are often at the mercy of large corporations, especially with more modern app-based services.
+
+As far as taking the power away from a central authority goes, Taxicoin has achieved this by effectively utilising an Ethereum network based protocol, which doesn't place the trust of the service in any one participant's hands. In theory it should be nonsensical for one party to attempt to cheat the other, as they will lose their deposit, although the deposit must be significant enough for this mechanic to function correctly.
+
+If a person wished to develop a Taxi app, their desired features should conceivably be possible to implement within the scope of a Taxicoin implementation. And in the case that this is not true, as the protocol specification is open source, they may submit proposed changes to it, or write an extension to it.
+
+\subsection{Future Development}
+
+There are several mentions throughout this report of potential improvements to the protocol. One such is the inclusion of a message type for informal \enquote{chat} between rider and driver before and during a journey. Although the protocol functions without this, it would be useful to be able to communicate special requirements, for example.
+
+The Taxicoin JavaScript library makes heavy use of the \textit{Web3.js} library and signing transactions on a local Ethereum node, which functions adequately, but can be inflexible. If the user does not have access to their own local node, they may wish to use a third party node, such as the Infura service [cite]. In order for this to be secure, a user's signing key must not be transmitted to the third party. Therefore, a reasonable improvement to allow this would be to implement the signing of transactions locally (from JavaScript). This can be achieved either with Web3, or via an alternative such as \textit{Ethers.js}.
+
+% TODO: improvements
+
+Additionally, due to the interaction-based nature of the protocol, there are likely to be some \enquote{rough edges} around the protocol, for which certain aspects will have to be adjusted. These are most likely to be focused around unforeseen exceptional circumstances.
+
+As the protocol has been designed around an open ecosystem of independent implementations, it is hoped that such implementations will begin to be written. The core of these will likely be interaction libraries for various languages (other than JavaScript), and indeed one such library is already under development for the Go language [cite], based on the protocol specification in this document.

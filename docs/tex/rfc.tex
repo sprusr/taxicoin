@@ -106,7 +106,7 @@ The specified arguments are to be supplied when calling that function of the con
 
 \begin{description}[leftmargin=8em,style=nextline]
 	\item [Description]
-		Formally proposes the alteration of the fare for a journey. Intended to be called after an off-chain negotiation with \lstinline{nfar} messages. % TODO: update with actual message topic.
+		Formally proposes the alteration of the fare for a journey. Intended to be called after an off-chain negotiation with \lstinline{Propose Fare Alteration} messages.
 	\item [Arguments]
 		New Fare: uint, value in \textit{wei}
 	\item [Payable]
@@ -144,7 +144,7 @@ The specified arguments are to be supplied when calling that function of the con
 	\item [Preconditions]
 		None
 	\item [Postconditions]
-		Returns an integer between 0 and 3, representing the enum $\{ None, Driver, ActiveDriver, Rider \}$.
+		Returns an integer between 0 and 3, representing the enum \{ None, Driver, ActiveDriver, Rider \}.
 \end{description}
 
 \subsubsection{Get Driver}
@@ -346,7 +346,9 @@ The above methods can be translated to a Solidity interface, which should be con
 
 \subsection{Process Flow Diagram}
 
-This describes the possible routes of interaction through the system.
+This describes the possible routes of interaction through the system. It is currently incomplete.
+
+% TODO: finish this diagram
 
 \begin{tikzpicture}[node distance=2cm]
 	\node (driver-start) [startstop] {Driver Start};
