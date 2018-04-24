@@ -1,8 +1,6 @@
-pragma solidity ^0.4.14;
+pragma solidity ^0.4.21;
 
-contract TaxicoinInterface {
-
-	enum UserType {None, Driver, ActiveDriver, Rider}
+contract ITaxicoin {
 
 	function driverAdvertise(string lat, string lon, string pubKey) public payable;
 
@@ -20,7 +18,7 @@ contract TaxicoinInterface {
 
 	function riderConfirmFareAlteration(uint newFare) public payable;
 
-	function getUserType(address addr) public view returns (UserType);
+	function getUserType(address addr) public view returns (uint8);
 
 	function getDriver(address driverAddr) public view returns (address addr, string lat, string lon, string pubKey, uint updated, address rider, uint deposit, uint8 rating, uint ratingCount, uint8 riderRating, uint proposedNewFare, bool hasProposedNewFare);
 
