@@ -91,7 +91,7 @@ contract Taxicoin is ITaxicoin {
 		require(driver != address(0));
 
 		// check the driver is advertised
-		require(getUserType(driver) == USERTYPE_ACTIVEDRIVER);
+		require(getUserType(driver) == USERTYPE_DRIVER);
 
 		// set the rider's deposit, fare and pubKey
 		riders[tx.origin].deposit = riderDeposit;
@@ -130,7 +130,8 @@ contract Taxicoin is ITaxicoin {
 		// check the driver is advertised
 		require(drivers[tx.origin].addr == tx.origin);
 
-		// TODO: check fare
+		// check declared fare is the same as rider's provided
+		require(riders[rider].fare == fare);
 
 		// check the rider has agreed to ride with this driver
 		require(riders[rider].driver == tx.origin);
@@ -261,20 +262,23 @@ contract Taxicoin is ITaxicoin {
 	}
 
 	function getDriver(address driverAddr) public view returns (address addr, string lat, string lon, string pubKey, uint updated, address rider, uint deposit, uint8 rating, uint ratingCount, uint8 riderRating, uint proposedNewFare, bool hasProposedNewFare) {
-		Driver dr = drivers[driverAddr];
+		Driver memory dr = drivers[driverAddr];
 		return(dr.addr, dr.lat, dr.lon, dr.pubKey, dr.updated, dr.rider, dr.deposit, dr.rating, dr.ratingCount, dr.riderRating, dr.proposedNewFare, dr.hasProposedNewFare);
 	}
 
 	function getNextDriver(address driverAddr) public view returns (address addr, string lat, string lon, string pubKey, uint updated, address rider, uint deposit, uint8 rating, uint ratingCount, uint8 riderRating, uint proposedNewFare, bool hasProposedNewFare) {
-		//
+		address nextDriver = dllDriverIndex[driverAddr][NEXT];
+		return getDriver(nextDriver);
 	}
 
-	function getPreviousDriver(address driverAddr) public view returns (address addr, string lat, string lon, string pubKey, uint updated, address rider, uint deposit, uint8 rating, uint ratingCount, uint8 riderRating, uint proposedNewFare, bool hasProposedNewFare) {
-		//
+	function getPreviousDriver(address driverAddr) public view returns (address, string, string, string, uint, address, uint, uint8, uint, uint8, uint, bool) {
+		address prevDriver = dllDriverIndex[driverAddr][PREV];
+		return getDriver(prevDriver);
 	}
 
 	function getRider(address riderAddr) public view returns (address addr, string pubKey, address driver, uint fare, uint deposit,	uint8 rating,	uint ratingCount,	uint8 driverRating) {
-		//
+		Rider memory rd = riders[riderAddr];
+		return(rd.addr, rd.pubKey, rd.driver, rd.fare, rd.deposit,	rd.rating,	rd.ratingCount, rd.driverRating);
 	}
 
 	//---------------------------------------------------------//
