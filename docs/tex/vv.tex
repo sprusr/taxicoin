@@ -22,6 +22,42 @@ Finally, a static analysis tool has been applied on the smart contract to check 
 The functional integration tests use the \textit{Ganache} [cite] tool to emulate a blockchain, on which we deploy the Taxicoin contract. The framework used for testing is Mocha [cite], along with the Chai [cite] assertion library. The tests are orchestrated by Karma [cite], which transpiles the JavaScript library and launches a Google Chrome browser instance in which to run the tests. Before each test, the state of the Taxicoin contract is reset, and a new Taxicoin library instance is constructed for use. These are then cleaned up in the after hook.
 
 % TODO: test case examples
+\begin{lstlisting}[language=JavaScript]
+describe('driver accept journey', () => {
+  it('should throw an error if the provided address (rider) has not agreed to ride with the driver', async () => {
+    const riderAccount = await tcRider.getAccount()
+    await expect(tcDriver.driverAcceptJourney(riderAccount)).to.be.rejected
+  })
+
+  it('should set the driver\'s state to being on a journey', async () => {
+    const driverAccount = await tcDriver.getAccount()
+    const riderAccount = await tcRider.getAccount()
+    const fare = 100
+
+    await tcDriver.driverAdvertise(51.5074, 0.1278)
+    await tcRider.riderCreateJourney(driverAccount, fare)
+    await tcDriver.driverAcceptJourney(riderAccount)
+
+    const journey = await tcDriver.getJourney()
+    journey.should.not.be.null
+  })
+
+  it('should remove the driver from the list of advertised drivers', async () => {
+    const driverAccount = await tcDriver.getAccount()
+    const riderAccount = await tcRider.getAccount()
+    const fare = 8000
+
+    await tcDriver.driverAdvertise(51.5074, 0.1278)
+    await tcRider.riderCreateJourney(driverAccount, fare)
+    await tcDriver.driverAcceptJourney(riderAccount)
+
+    const drivers = await tcRider.getDrivers()
+
+    expect(drivers).to.be.empty
+  })
+})
+\end{lstlisting}
+
 
 Each test group is based around one of the methods or messages, as described in the protocol specification. With the methods, we can easily construct each individual test scenario based on the pre- and post-conditions.
 
