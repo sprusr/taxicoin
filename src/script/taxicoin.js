@@ -372,10 +372,7 @@ class Taxicoin {
 
     const tx = await instance.completeJourney(rating, {from: account})
 
-    console.log('still', tx)
-
     let otherPubKey
-    console.log('aand', userType)
     if (userType === Taxicoin.RIDER) {
       otherPubKey = journey.driver.pubKey
     } else {
