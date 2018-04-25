@@ -88,7 +88,7 @@ class Taxicoin {
       web3Provider = window.web3.currentProvider
     } else if (typeof options.web3.provider === 'string') {
       web3Provider = new Web3.providers.HttpProvider(options.web3.provider)
-    } else if (options.web3.provider instanceof Web3.providers.HttpProvider) { // TODO: include other providers
+    } else if (options.web3.provider) {
       web3Provider = options.web3.provider
     } else {
       throw new Web3Error('No provider set!')
@@ -104,7 +104,7 @@ class Taxicoin {
     let shhProvider
     if (typeof options.shh.provider === 'string') {
       shhProvider = new Web3.providers.HttpProvider(options.shh.provider)
-    } else if (options.shh.provider instanceof Web3.providers.HttpProvider) { // TODO: include other providers
+    } else if (options.shh.provider) {
       shhProvider = options.shh.provider
     } else {
       shhProvider = web3Provider
@@ -702,21 +702,21 @@ class Taxicoin {
     return this._shhPubKey
   }
 
-  get web3Url () {
-    return this.web3.currentProvider.host
+  get web3Provider () {
+    return this.web3.currentProvider
   }
 
-  set web3Url (url) {
-    this.web3 = new Web3(new Web3.providers.HttpProvider(url))
+  set web3Provider (provider) {
+    this.web3.setProvider(provider)
   }
 
-  get shhUrl () {
-    return this.shh.currentProvider.host
+  get shhProvider () {
+    return this.shh.currentProvider
   }
 
-  set shhUrl (url) {
-    this.shh = new Shh(url)
-    // TODO update identity, pending loading from localstorage
+  set shhProvider (provider) {
+    this.shh.setProvider(provider)
+    this._shhIdentity = null
   }
 
   // ---------------- //

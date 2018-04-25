@@ -5,6 +5,7 @@
       <v-marker :lat-lng="[$location.lat, $location.lng]"></v-marker>
     </v-map>
     <button type="button" class="advertise-button" @click="advertise">Advertise</button>
+    <button type="button" class="revoke-button" @click="revoke">Revoke Advert</button>
     <ul>
       <li v-for="(job, index) in jobs">
         <p>Job: {{job}}</p>
@@ -68,6 +69,13 @@ export default {
     advertise () {
       this.$tc.driverAdvertise(this.$location.lat, this.$location.lng).then(() => {
         console.log('advertised')
+      }).catch(error => {
+        this.showError(error.message)
+      })
+    },
+    revoke () {
+      this.$tc.driverRevokeAdvert().then(() => {
+        console.log('revoked')
       }).catch(error => {
         this.showError(error.message)
       })

@@ -101,8 +101,8 @@ export default {
     propose (index) {
       const driver = this.drivers[index]
 
-      this.$tc.riderProposeJob(driver.pubKey, {lat: this.$location.lat, lng: this.$location.lng}, this.map.toLocation).then(() => {
-        console.log('proposed')
+      this.$tc.riderProposeJob(driver.pubKey, {lat: this.$location.lat, lng: this.$location.lng}, this.map.toLocation).then((msg) => {
+        console.log('proposed', msg)
       })
     },
     accept (index) {
