@@ -22,11 +22,11 @@ The result is that the EVM is Turing complete, and thus in theory any arbitrary 
 
 \subsection{dApps}
 
-While smart contracts are well suited to taking inputs, making state changes, and producing outputs, that is all they do. It is possible to interact with them via a command line interface, through an Ethereum node, however this is obviously far from the desired experience for end users. To address this problem, several attempts at providing a user interface layer for the Ethereum network have been introduced. The most widely adopted, and officially endorsed solution, is Web3 - a browser API which allows interacting with all parts of the Ethereum platform from Javascript embedded on a web page.
+While smart contracts are well suited to taking inputs, making state changes, and producing outputs, that is all they do. It is possible to interact with them via a command line interface, through an Ethereum node, however this is obviously far from the desired experience for end users. To address this problem, several attempts at providing a user interface layer for the Ethereum network have been introduced. The most widely adopted, and officially endorsed solution [cite], is Web3 - a browser API which allows interacting with all parts of the Ethereum platform from Javascript embedded on a web page.
 
-This leads to the approach that many Ethereum dApp developers take: considering their application as a traditional “Single Page App”, where instead of calling HTTP API endpoints, they are now interacting with a smart contract through the use of Web3. Smart contracts effectively take the place of a “backend” web server, leading to many benefits over traditional web apps, such as availability, security and integrity.
+% TODO: cite endorsement
 
-% TODO: explain the benefits in more detail
+This leads to the approach that many Ethereum dApp developers take: considering their application as a traditional “Single Page App”, where instead of calling HTTP API endpoints, they are now interacting with a smart contract through the use of Web3. Smart contracts effectively take the place of a “backend” web server, leading to many benefits over traditional web apps, such as availability, security and integrity: a single fault in the system does not result in access being denied to users as would be the case with a web server becoming unavailable; there is no need to trust that information will be securely kept on a company's servers, instead strong encryption is used which may be independently audited; and the state of an application is kept by a smart contract whose functionality is publicly available to see and cannot be tampered with - if it is correctly implemented its state cannot be maliciously changed.
 
 Coupling this with Whisper allows for peer-to-peer communication between instances of a dApp, which in most cases translates to between different users. For example, two parties negotiating the price of an item to be purchased - they do not necessarily want their negotiation to be public (or rather, it does not provide any value for it to be), therefore they can come to an agreement “off-chain” before publishing (sending) a transaction of the final agreed price. Whisper is also beneficial for situations where the sender of a message wishes to remain anonymous. When publishing a transaction on the blockchain, the sender is published along with it, whereas in Whisper, unless signed, it is improbable to determine the sender of a message [cite]. % TODO: cite shh plausible deniability
 
@@ -36,9 +36,30 @@ In this manner, it is possible with the Ethereum platform to develop fully decen
 
 \subsection{Solidity Language}
 
-% TODO: explain basics of Solidity
+The language most commonly used to develop smart contracts is a domain specific language called Solidity [cite]. It features a C-like syntax, static typing, and supports \enquote{inheritance, libraries and complex user-defined types}. % TODO: cite
 
-Todo.
+While Solidity is still relatively young in comparison with more well-known languages, it is mature enough to use in production environments.
+
+A simple example of a typical contract written in Solidity is as follows:
+
+\begin{lstlisting}[language=Solidity]
+contract MyContract {
+  // instance variables keep the state of the contract
+  uint public counter;
+
+  // constructor is called when the contract is deployed to a network
+  constructor() public {
+    counter = 0;
+  }
+
+  // functions may be defined which perform some action when called
+  function increaseCount(uint by) public {
+    counter += by;
+  }
+}
+\end{lstlisting}
+
+There are also many more domain-specific features, such as an \lstinline{address} type, representing an address on the network, as well as global variables for accessing the state of the blockchain, and properties of the transaction which is calling the contract.
 
 \subsection{Smart Contract System Design}
 
@@ -50,6 +71,12 @@ Additionally, as there is an attached "gas" fee for publishing transactions and 
 
 \subsection{Why Ethereum}
 
-% TODO: comparison with other tech and why I chose eth
+There are a multitude of different projects aiming to be a platform for building decentralised applications upon, however none offer such a rich feature set and relative stability as Ethereum does.
 
-Todo.
+The majority of other decentralisation projects are stateless, meaning that between two participants, there must be some kind of storage mechanism if they wish for the data being sent to be kept. In the example of a messaging application, this would mean that each party would need to independently store the message history. If all participants were to lose the history, there would be no way of recovering it. Alternatively a complex infrastructure for message storage could be developed by an application's developers.
+
+Blockchain-based platforms offer a solution where the application developer need not worry about the infrastructure for managing state. And among such solutions, Ethereum is the most appealing, again due to its features, but also the number of users.
+
+Compared with NEO [cite], an alternative blockchain-based platform which supports smart contracts, Ethereum has a much larger development community, and has many more projects being developed with it as the basis. In this new field, it is likely sensible to \enquote{go with the masses}, as from a user perspective, it is a much more pleasant experience to only need to install tools to interact with a single blockchain.
+
+Additionally, from a developer point of view, as more applications are developed on a single blockchain, the interoperability of these allows more and more complex integrations to be built.

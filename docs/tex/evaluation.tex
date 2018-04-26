@@ -4,7 +4,17 @@ This final sections acts as an evaluation of the success of the Taxicoin project
 
 \subsection{Completeness of Requirements}
 
-\enquote{How do you know that your set of requirements is complete and correct, with respect to the objective of the project?}
+While Taxicoin does have defined behaviour for all perceived \enquote{normal} behaviours of drivers and riders, it is difficult to determine whether the requirements proposed in this document for a taxi protocol would satisfy all scenarios which could possibly be encountered when it is in use. However, for situations where it may not satisfy the needs, the protocol has been designed in such a way that it is almost always possible to recover from an unexpected situation.
+
+For example, when a rider and a driver are participating in a journey, if for some reason it cannot be completed successfully, the fare for the journey can be adjusted (possibly to zero if this is desired) to account for such occurrences.
+
+A potential flaw in the protocol is that if either party loses the ability to send transactions while a journey is in progress, neither will be able to end the journey and thus continue using the application. A solution to this would be enforcing time limits on responses from either party to ending a journey. If, after a certain period, no response has been received then the journey will be completed regardless with the assumption that the non-responsive party acted in the favour of the other (highest possible rating for example).
+
+In terms of fairness, there is concern that a \enquote{will of the market} type approach of the reverse-bidding system implemented in the Taxicoin protocol will drive fares down to the point that they are no longer fair for the majority of drivers. However, more experienced drivers with higher reputation have basis on which to value their services more highly, and therefore can continue to charge higher fares.
+
+A rider (and their client) is making a decision based on factors beyond just the cost of a journey when deciding which driver to accept. They also factor in the number of journeys a driver has completed previously, as well as their overall rating. This means that depending on the preference of the rider, they won't always accept the lowest possible fare.
+
+Until the protocol is widely used, it is not possible to say whether this approach will be wholly successful. If it is not, the protocol can be altered to a more effective solution.
 
 \subsection{Impact}
 
@@ -19,10 +29,6 @@ If a person wished to develop a Taxi app, their desired features should conceiva
 Taxicoin uses its own novel method of negotiation, where two parties first agree on a price for a service off-chain (through Whisper), and then make a formal agreement on chain. This is a method which may potentially be used with a myriad of other applications.
 
 As such, it would be sensible for a generic standard to be developed for this purpose. This would allow for the development of other contracts which can participate in negotiations which follow the standard, in a similar way to, for example, interfaces in programming languages which support polymorphism.
-
-\subsubsection{User Value}
-
-In context of aims set out at the start of the report.
 
 \subsection{Future Development}
 
