@@ -206,21 +206,13 @@ class Taxicoin {
     await this._waitForShh()
     const account = await this.getAccount()
 
-    const proposal = {
+    const payload = {
       address: account,
       pickup: pickup,
       dropoff: dropoff
     }
 
-    return this.shh.post({
-      pubKey: driverIdentity, // pubKey of recipient
-      sig: this._shhIdentity, // sign it to prove it's from us
-      ttl: 10,
-      topic: this._shhTopics.job, // 4 bytes
-      payload: this.web3.utils.asciiToHex(JSON.stringify(proposal)),
-      powTime: 3, // how long to maths
-      powTarget: 0.5 // how hard to maths
-    })
+    return this._sendShhMessage(driverIdentity, this._shhTopics.job, payload)
   }
 
   /**
@@ -230,20 +222,12 @@ class Taxicoin {
     await this._waitForShh()
     const account = await this.getAccount()
 
-    const response = {
+    const payload = {
       address: account,
       fare: -1
     }
 
-    return this.shh.post({
-      pubKey: riderIdentity, // pubKey of recipient
-      sig: this._shhIdentity, // sign it to prove it's from us
-      ttl: 10,
-      topic: this._shhTopics.quote, // 4 bytes
-      payload: this.web3.utils.asciiToHex(JSON.stringify(response)),
-      powTime: 3, // how long to maths
-      powTarget: 0.5 // how hard to maths
-    })
+    return this._sendShhMessage(riderIdentity, this._shhTopics.quote, payload)
   }
 
   /**
@@ -252,21 +236,12 @@ class Taxicoin {
   async driverQuoteProposal (riderIdentity, fare) {
     const account = await this.getAccount()
 
-    const response = {
+    const payload = {
       address: account,
       fare: fare
     }
 
-    await this._waitForShh()
-    return this.shh.post({
-      pubKey: riderIdentity, // pubKey of recipient
-      sig: this._shhIdentity, // sign it to prove it's from us
-      ttl: 10,
-      topic: this._shhTopics.quote, // 4 bytes
-      payload: this.web3.utils.asciiToHex(JSON.stringify(response)),
-      powTime: 3, // how long to maths
-      powTarget: 0.5 // how hard to maths
-    })
+    return this._sendShhMessage(riderIdentity, this._shhTopics.quote, payload)
   }
 
   /**
@@ -287,15 +262,7 @@ class Taxicoin {
       fare: fare
     }
 
-    await this.shh.post({
-      pubKey: driver.pubKey, // pubKey of recipient
-      sig: this._shhIdentity, // sign it to prove it's from us
-      ttl: 10,
-      topic: this._shhTopics.created, // 4 bytes
-      payload: this.web3.utils.asciiToHex(JSON.stringify(payload)),
-      powTime: 3, // how long to maths
-      powTarget: 0.5 // how hard to maths
-    })
+    await this._sendShhMessage(driver.pubKey, this._shhTopics.created, payload)
 
     return tx
   }
@@ -324,16 +291,7 @@ class Taxicoin {
       address: account
     }
 
-    await this._waitForShh()
-    await this.shh.post({
-      pubKey: rider.pubKey, // pubKey of recipient
-      sig: this._shhIdentity, // sign it to prove it's from us
-      ttl: 10,
-      topic: this._shhTopics.accepted, // 4 bytes
-      payload: this.web3.utils.asciiToHex(JSON.stringify(payload)),
-      powTime: 3, // how long to maths
-      powTarget: 0.5 // how hard to maths
-    })
+    await this._sendShhMessage(rider.pubKey, this._shhTopics.accepted, payload)
 
     return tx
   }
@@ -348,16 +306,7 @@ class Taxicoin {
       }
     }
 
-    await this._waitForShh()
-    return this.shh.post({
-      pubKey: journey.rider.pubKey, // pubKey of recipient
-      sig: this._shhIdentity, // sign it to prove it's from us
-      ttl: 10,
-      topic: this._shhTopics.location, // 4 bytes
-      payload: this.web3.utils.asciiToHex(JSON.stringify(payload)),
-      powTime: 3, // how long to maths
-      powTarget: 0.5 // how hard to maths
-    })
+    return this._sendShhMessage(journey.rider.pubKey, this._shhTopics.location, payload)
   }
 
   /**
@@ -379,16 +328,7 @@ class Taxicoin {
       otherPubKey = journey.rider.pubKey
     }
 
-    await this._waitForShh()
-    await this.shh.post({
-      pubKey: otherPubKey, // pubKey of recipient
-      sig: this._shhIdentity, // sign it to prove it's from us
-      ttl: 10,
-      topic: this._shhTopics.completed, // 4 bytes
-      payload: this.web3.utils.asciiToHex(JSON.stringify({})),
-      powTime: 3, // how long to maths
-      powTarget: 0.5 // how hard to maths
-    })
+    await this._sendShhMessage(otherPubKey, this._shhTopics.completed, {})
 
     return tx
   }
@@ -409,16 +349,7 @@ class Taxicoin {
       fare: newFare
     }
 
-    await this._waitForShh()
-    return this.shh.post({
-      pubKey: otherPubKey, // pubKey of recipient
-      sig: this._shhIdentity, // sign it to prove it's from us
-      ttl: 10,
-      topic: this._shhTopics.newFare, // 4 bytes
-      payload: this.web3.utils.asciiToHex(JSON.stringify(payload)),
-      powTime: 3, // how long to maths
-      powTarget: 0.5 // how hard to maths
-    })
+    return this._sendShhMessage(otherPubKey, this._shhTopics.newFare, payload)
   }
 
   /**
@@ -586,6 +517,22 @@ class Taxicoin {
     await this._generateShhFilter()
     const pubKey = await this.shh.getPublicKey(this._shhIdentity)
     this._shhPubKey = pubKey
+
+    // set min PoW
+    await this.shh.setMinPoW(0.02)
+  }
+
+  async _sendShhMessage (pubKey, topic, payload) {
+    await this._waitForShh()
+    return this.shh.post({
+      pubKey: pubKey, // pubKey of recipient
+      sig: this._shhIdentity, // sign it to prove it's from us
+      ttl: 10,
+      topic: topic, // 4 bytes
+      payload: this.web3.utils.asciiToHex(JSON.stringify(payload)),
+      powTime: 10, // how long to maths
+      powTarget: 0.02 // how hard to maths
+    })
   }
 
   // ---------------- //
