@@ -344,39 +344,67 @@ The above methods can be translated to a Solidity interface, which should be con
 
 \lstinputlisting[language=Solidity]{../contracts/ITaxicoin.sol}
 
+\pagebreak
 \subsection{Process Flow Diagram}
 
-This describes the possible routes of interaction through the system. It is currently incomplete.
+This describes the possible routes of interaction through the system.
 
-% TODO: finish this diagram
+\begin{figure*}[h!]
+% include shapes and arrows for flow charts and set up
+\usetikzlibrary{shapes.geometric, arrows}
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, text width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30]
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, text width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30]
+\tikzstyle{process} = [rectangle, minimum width=3cm, text width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30]
+\tikzstyle{decision} = [diamond, aspect=1.2, minimum width=3cm, text width=2cm, minimum height=1cm, text centered, draw=black, fill=green!30]
+\tikzstyle{arrow} = [thick,->,>=stealth]
 
-\begin{tikzpicture}[node distance=2cm]
-	\node (driver-start) [startstop] {Driver Start};
-	\node (driver-advertise) [process, below of=driver-start] {Driver Advertise};
-	\node (driver-revoke) [startstop, right of=driver-advertise, xshift=2cm] {Revoke Advert};
-	\node (get-drivers) [process, below of=driver-advertise] {Rider Get Drivers};
-	\node (rider-start) [startstop, right of=get-drivers, xshift=2cm] {Rider Start};
-	\node (propose-job) [process, below of=get-drivers] {Rider Propose Job};
-	\node (accept-job-dec) [decision, below of=propose-job, yshift=-0.4cm] {Driver take job?};
-	\node (driver-reject) [process, right of=accept-job-dec, xshift=2cm] {Driver Reject};
-	\node (driver-quote) [process, below of=accept-job-dec, yshift=-0.3cm] {Driver Quote Fare};
-	\node (accept-fare-dec) [decision, below of=driver-quote, yshift=-0.5cm] {Rider accept fare?};
-	\node (rider-reject) [process, right of=accept-fare-dec, xshift=2cm] {Rider Reject Fare};
-	\node (create-journey) [process, below of=accept-fare-dec, yshift=-0.4cm] {Rider Create Journey};
-	\node (accept-journey) [process, below of=create-journey] {Driver Accept Journey};
-	\node (journey) [process, below of=accept-journey] {Journey};
+\begin{tikzpicture}[node distance=1.8cm]
+	\node (n0) [startstop] {Driver Start};
+	\node (n1) [process, below of=n0] {Driver Advertise};
+	\node (n2) [process, below of=n1] {Rider Get Drivers};
+	\node (n3) [startstop, right of=n2, xshift=2.2cm] {Rider Start};
+	\node (n4) [process, below of=n2] {Rider Propose Job};
+	\node (n5) [decision, below of=n4, yshift=-0.6cm] {Driver take job?};
+	\node (n6) [process, right of=n5, xshift=2.2cm] {Driver Reject};
+	\node (n7) [process, below of=n5, yshift=-0.8cm] {Driver Quote Fare};
+	\node (n8) [decision, below of=n7, yshift=-0.6cm] {Rider accept fare?};
+	\node (n9) [process, right of=n8, xshift=2.2cm] {Rider Reject Fare};
+	\node (n10) [process, below of=n8, yshift=-0.8cm] {Rider Create Journey};
+	\node (n11) [process, below of=n10] {Driver Accept Journey};
+	\node (n12) [process, below of=n11] {Journey};
+	\node (n13) [decision, right of=n0, xshift=7cm, yshift=-2cm] {Journey without issue?};
+	\node (n14) [process, below of=n13, yshift=-1.2cm] {Rider \& Driver Complete Journey};
+	\node (n15) [startstop, below of=n14] {End};
+	\node (n16) [process, below of=n15, yshift=-1.2cm] {Disputing Party Sends Fare Alteration Proposal};
+	\node (n17) [decision, below of=n16, yshift=-1.2cm] {Other accepts?};
+	\node (n18) [process, below of=n17, yshift=-1cm] {Driver Formally Proposes Fare Alteration};
+	\node (n19) [process, below of=n18] {Rider Accepts};
 	
-	\draw [arrow] (driver-start) -- (driver-advertise);
-	\draw [arrow] (driver-advertise) -- (driver-revoke);
-	\draw [arrow] (driver-advertise) -- (get-drivers);
-	\draw [arrow] (rider-start) -- (get-drivers);
-	\draw [arrow] (get-drivers) -- (propose-job);
-	\draw [arrow] (propose-job) -- (accept-job-dec);
-	\draw [arrow] (accept-job-dec) -- (driver-quote);
-	\draw [arrow] (accept-job-dec) -- (driver-reject);
-	\draw [arrow] (driver-quote) -- (accept-fare-dec);
-	\draw [arrow] (accept-fare-dec) -- (create-journey);
-	\draw [arrow] (accept-fare-dec) -- (rider-reject);
-	\draw [arrow] (create-journey) -- (accept-journey);
-	\draw [arrow] (accept-journey) -- (journey);
+	\draw [arrow] (n0) -- (n1);
+	\draw [arrow] (n1) -- (n2);
+	\draw [arrow] (n3) -- (n2);
+	\draw [arrow] (n2) -- (n4);
+	\draw [arrow] (n4) -- (n5);
+	\draw [arrow] (n5) -- node[anchor=south] {No} (n6);
+	\draw [arrow] (n6) |- (n4);
+	\draw [arrow] (n5) -- node[anchor=west] {Yes} (n7);
+	\draw [arrow] (n7) -- (n8);
+	\draw [arrow] (n8) -- node[anchor=south] {No} (n9);
+	\draw [arrow] (n9) |- (n7);
+	\draw [arrow] (n8) -- node[anchor=west] {Yes} (n10);
+	\draw [arrow] (n10) -- (n11);
+	\draw [arrow] (n11) -- (n12);
+	
+	\draw [arrow] (n12.south) |- ++(6cm,-3mm) -- ++(0,19.8cm) -| (n13.north);
+	
+	\draw [arrow] (n13) -- node[anchor=west] {Yes} (n14);
+	\draw [arrow] (n14) -- (n15);
+	
+	\draw [arrow] (n13.east) -- node[anchor=south] {No} ++(4mm,0) |- (n16.east);
+	\draw [arrow] (n16) -- (n17);
+	\draw [arrow] (n17) -- node[anchor=west] {Yes} (n18);
+	\draw [arrow] (n17.west) -- node[anchor=north] {No} ++(-5mm,0) |- (n16.west);
+	\draw [arrow] (n18) -- (n19);
+	\draw [arrow] (n19.west) -- ++(-9mm,0) |- (n13.west);
 \end{tikzpicture}
+\end{figure*}
