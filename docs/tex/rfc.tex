@@ -6,7 +6,7 @@ The protocol portion of Taxicoin is designed to be open. As such, anybody should
 
 Each of these methods is intended to be part of a smart contract. When one is called, it will modify the state of the contract, and/or return a value.
 
-The specified arguments are to be supplied when calling that function of the contract. The \textit{payable} keyword indicates that a method accepts a transaction with a currency value attached. In instances where the preconditions for a method are not met, the method will revert and the state will be unmodified.
+The specified arguments are to be supplied when calling that function of the contract, with the types representing built-in Solidity language types. The \textit{payable} keyword indicates that a method accepts a transaction with a currency value attached. In instances where the preconditions for a method are not met, the method will revert and the state will be unmodified.
 
 \subsubsection{Driver Advertise}
 

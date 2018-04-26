@@ -2,14 +2,14 @@
 
 As Taxicoin is intended to be a ubiquitous, maintenance-free, and open protocol, it is extremely important that implementations correctly conform to the standard, and that they are without issues. If, for example, one widely used implementation featured an incorrectly implemented method with unexpected side-effects, it could impact on the whole network of Taxicoin clients and contracts.
 
-\subsection{Verification}
+\subsection{Validation}
 
 % Are we building the product right?
 % Compare with protocol specification
 
-In order to ensure this implementation of Taxicoin meets the protocol specification, various methods of verification have been used.
+In order to ensure this implementation of Taxicoin meets the protocol specification, various methods of validation have been used.
 
-A series of functional integration tests verify the overall ability of the client library to interact with the smart contract instance, while conforming to the protocol specification.
+A series of functional integration tests validate the overall ability of the client library to interact with the smart contract instance, while conforming to the protocol specification.
 
 Unit testing has also been performed on the smart contract itself to check the various pre- and post-conditions of each protocol method, as well as any additional internal methods not defined in the protocol.
 
@@ -109,12 +109,12 @@ Additionally, it is able to detect common unexpected cases such as integer overf
 
 This static analysis is yet another method for ensuring that the Taxicoin protocol can act entirely autonomously, without fault, in what should be assumed as a hostile environment.
 
-\subsection{Validation}
+\subsection{Verification}
 
 % Are we building the right product?
 % Compare with requirements
 
-The above verification methods confirm that the technical specification for the project is met, however they do not provide a sense for whether the functional requirements of the project have been satisfied. The only way we can do this is to check each one individually.
+The above validation methods confirm that the technical specification for the project is met, however they do not provide a sense for whether the functional requirements of the project have been satisfied. The only way we can do this is to check each one individually.
 
 Based on the below comparisons between functional requirements and implemented features, this implementation of the Taxicoin protocol satisfies all original core requirements, and also some of the additional requirements.
 

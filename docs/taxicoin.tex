@@ -11,6 +11,7 @@
 \usepackage{color}
 \usepackage{tikz}
 \usepackage{hyperref}
+\usepackage{titlesec}
 
 % set up syntax highlighting for listings
 \definecolor{lightgray}{rgb}{.97,.97,.97}
@@ -75,6 +76,9 @@
 \tikzstyle{decision} = [diamond, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30]
 \tikzstyle{arrow} = [thick,->,>=stealth]
 
+% sections on new page
+\newcommand{\sectionbreak}{\clearpage}
+
 % document info
 \title{Taxicoin: A Decentralised Taxi Protocol}
 \author{Scott Street\\{\small 159027651}}
@@ -100,6 +104,7 @@
 \input{tex/implementation}
 \input{tex/vv}
 \input{tex/evaluation}
+\input{tex/conclusion}
 
 \pagebreak
 
