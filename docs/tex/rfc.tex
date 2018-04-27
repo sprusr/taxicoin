@@ -352,7 +352,7 @@ The above methods can be translated to a Solidity interface, which should be con
 
 This diagram is a high-level explanation of how the various components of the Taxicoin protocol fit together.
 
-\begin{figure*}[h!]
+\begin{figure}[h!]
 \centering
 \begin{tikzpicture}[node distance=1.8cm]
 	\node (n0) [box] {Smart Contract};
@@ -363,7 +363,8 @@ This diagram is a high-level explanation of how the various components of the Ta
 	\draw [arrow] (n2) -- node[anchor=west, text width=2.5cm, above=0.5cm, right=0.4cm] {Formal driver actions (method calls)} (n0);
 	\draw [doublearrow] (n1) -- node[anchor=north, text width=3.5cm, below=0.2cm] {Peer-to-peer via Whisper (messages)}(n2);
 \end{tikzpicture}
-\end{figure*}
+\caption{Visual representation of how different components communicate in Taxicoin.}
+\end{figure}
 
 As seen in the above figure, the smart contract acts as an \enquote{orchestrator} of sorts. Informal messages between a rider and driver are first conducted off-chain, as explained previously, and formal binding actions are performed through the contract.
 
@@ -374,7 +375,7 @@ Although this architecture assumes the use of Ethereum smart contracts and the W
 
 This describes the possible routes of interaction through the system.
 
-\begin{figure*}[h!]
+\begin{figure}[h!]
 \centering
 \begin{tikzpicture}[node distance=1.8cm]
 	\node (n0) [startstop] {Driver Start};
@@ -425,6 +426,7 @@ This describes the possible routes of interaction through the system.
 	\draw [arrow] (n18) -- (n19);
 	\draw [arrow] (n19.west) -- ++(-9mm,0) |- (n13.west);
 \end{tikzpicture}
-\end{figure*}
+\caption{Flow diagram of possible routes of interaction with Taxicoin.}
+\end{figure}
 
 

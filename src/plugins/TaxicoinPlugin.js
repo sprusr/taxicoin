@@ -5,7 +5,7 @@ export default {
     const web3Provider = window.web3 || 'http://localhost:7545'
 
     // TODO: check browser web3 supports shh
-    const shhProvider = window.web3 || 'http://localhost:8545'
+    const shhProvider = 'http://localhost:8545'
 
     Vue.prototype.$tc = new Taxicoin({
       web3: {

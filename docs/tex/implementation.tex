@@ -131,10 +131,11 @@ The \textit{Vue.js} JavaScript framework is used as a basis on which to develop 
 
 The application is split into two main parts: the ride page, and the drive page. Each one features user interface elements specific to that type of user.
 
-\begin{figure*}[h]
+\begin{figure}[h]
 	\centering
-	\includegraphics[width=12cm]{res/webapp.png}
-\end{figure*}
+	\includegraphics[width=11cm]{res/webapp.png}
+	\caption{The example Taxicoin client, as viewed in the Safari browser.}
+\end{figure}
 
 Vue introduces the concept of \textit{reactive} data - when a JavaScript object changes value, any component which is using the data (observing it) automatically updates to use the new value. Retrieving the user's current location is a key requirement for any implementation of the Taxicoin protocol, and within a web browser this can be done using the geolocation browser API.
 
