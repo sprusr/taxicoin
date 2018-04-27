@@ -1,0 +1,13 @@
+\subsection*{Project Diary}
+\addcontentsline{toc}{subsection}{Project Diary}
+
+The following in-person formal meetings were held. In addition to these, there was much discussion via email.
+
+\begin{description}
+    \item [3rd October 2017] talked about the fact that this project is relevant to the interests of the ALICE group. It is effectively a self-governing application. Was decided that the focus should be on compiling a list of ``must have'' features and then implementing them.
+    \item [16th October 2017] was suggested to write a RFC-style protocol specification, to be used later to test against to determine if the implementation is correct.
+    \item [13th November 2017] no huge amount of progress was reported due to other commitments. We revisited the idea of producing an RFC-style document, focusing on the IMAP protocol as an example.
+    \item [4th December 2017] we discussed that including a network architecture diagram in the report would be a good idea of explaining how various parts of the project communicate with each other (e.g. front end talks to contract, different instances of front end talk to each other). At this point, a working implementation had been completed, therefore we began talking about how to write tests. It was decided that the contract should be tested directly with unit tests, and potentially integration testing performed on the Javascript abstraction layer and contract. We discussed that it would be good to get to the point where the application could be security audited.
+    \item [14th Feburary 2018] in-person meeting was cancelled. Via email we discussed opportunities for research into the Ethereum field at the ETHDenver event which I was to attend. The RFC concept was developed further into a comprehensive protocol specification.
+    \item [16th April 2018] Feedback was given based on the the current state of the report. It was suggested that the protocol definition section be altered to be \enquote{more formal}, and an example was given of what this may look like. The key part of this was the addition of pre- and post-conditions to each method.
+\end{description}

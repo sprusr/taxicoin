@@ -14,7 +14,7 @@ The specified arguments are to be supplied when calling that function of the con
 	\item [Description]
 		Takes a deposit from a driver and publishes their location and public key.
 	\item [Arguments]
-		Latitude: String \\
+		Latitude: String\footnotemark \\
 		Longitude: String \\
 		Public Key: String
 	\item [Payable]
@@ -24,6 +24,8 @@ The specified arguments are to be supplied when calling that function of the con
 	\item [Postconditions]
 		The driver's location and public key are published, and the value of the deposit provided by the driver is recorded. If any deposit over the required amount was provided with the transaction, the excess is returned.
 \end{description}
+
+\footnotetext{Strings are used for latitude and longitude as floating point numbers can introduce inaccuracies due to the way they are stored.}
 
 \subsubsection{Driver Advert Revoke}
 
@@ -47,7 +49,7 @@ The specified arguments are to be supplied when calling that function of the con
 		Accepts a quoted fare for a journey as a rider and forms the rider's part of a contract between driver and rider. Intended to be called after an off-chain negotiation with \lstinline{job} and \lstinline{quot} messages.
 	\item [Arguments]
 		Driver Address: address \\
-		Fare: uint, value in \textit{wei} $n > 0$ \\
+		Fare: uint, value in \textit{wei}\footnotemark, $n > 0$ \\
 		Public Key: String
 	\item [Payable]
 		Fare plus rider deposit
@@ -56,6 +58,8 @@ The specified arguments are to be supplied when calling that function of the con
 	\item [Postconditions]
 		The rider's intent to travel with the specified driver at the specified price is published. At this stage, the agreement is not binding until the driver accepts, before which the journey may be cancelled, with the rider deposit and fare being returned in full.
 \end{description}
+
+\footnotetext{Wei is the smallest denomination of the Ether currency used in the Ethereum network.}
 
 \subsubsection{Rider Cancel Journey}
 

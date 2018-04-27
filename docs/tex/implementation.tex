@@ -2,7 +2,7 @@
 
 My implementation is in two parts: that of the protocol described above, and additionally an example \textit{Web3} client. The protocol itself is split between peer-to-peer communication and smart contract methods. P2P messages are handled entirely outside of the contract, and in this implementation are sent by the client library via the Whisper protocol on the Ethereum network.
 
-The entire implementation of the Taxicoin protocol and client is contained within one git repository. The directory structure is defined by a combination of \lstinline{vue-webpack}[cite] and \lstinline{truffle}[cite], both of which have strong opinions. % TODO: cite
+The entire implementation of the Taxicoin protocol and client is contained within one git repository. The directory structure is defined by a combination of \lstinline{vue-webpack} \cite{VueWebpack} and \lstinline{truffle} \cite{Truffle}, both of which have strong opinions.
 
 \subsection{Smart Contract}
 
@@ -66,8 +66,6 @@ At the end of a journey, both parties call the \lstinline{Complete Journey} meth
 
 When both parties have completed the journey, the ratings given are applied (recalculate average rating, and increment rating count), deposits returned, and the fare paid to the driver. The state of both is then reset -- their own addresses and those pointing to the other are set to zero, the ratings to be given to the other are set to zero, and the recorded values for the deposits are fare are set to zero.
 
-% TODO: code example
-
 \subsubsection{Integrity Checks}
 
 As this implementation is heavily based on the state of objects within the contract, it is important to maintain data integrity. Coupled with the immutability of smart contracts, if we do not ensure that our contract state is kept correctly, it may be impossible to recover from a situation where the state is altered in some unexpected way.
@@ -97,7 +95,7 @@ The client library exposes a class, which when instantiated sets up all of the c
 
 \subsubsection{Web3 Interaction}
 
-The JavaScript library used for interacting with the Ethereum blockchain is called \lstinline{Web3.js}[cite], and acts as a layer for sending commands to an Ethereum network node which computes transactions and relays them to the network.
+The JavaScript library used for interacting with the Ethereum blockchain is called \lstinline{Web3.js} \cite{Web3}, and acts as a layer for sending commands to an Ethereum network node which computes transactions and relays them to the network.
 
 This is coupled with the \lstinline{truffle-contract} library, which abstracts the logic for calling methods of a smart contract, and provides each one as an asynchronous JavaScript method. These in turn interact with a Web3 library instance. The typical code\footnotemark for calling a contract method is as follows:
 
@@ -127,6 +125,23 @@ The library also registers filters for the various Taxicoin message topics, auto
 
 \subsection{Example Web Client}
 
-This section is yet to be written.
+The example client implementation uses the client library, along with \textit{Web3.js} to interact with the Ethereum blockchain and Whisper protocol.
 
-% TODO: write about the client
+The \textit{Vue.js} JavaScript framework is used as a basis on which to develop a single-page web application. Vue uses a component-based architecture, where the functionality and formatting for a component is all self-contained. Pages are also considered to be components, and therefore each page follows the same model.
+
+The application is split into two main parts: the ride page, and the drive page. Each one features user interface elements specific to that type of user.
+
+\begin{figure*}[h]
+	\centering
+	\includegraphics[width=12cm]{res/webapp.png}
+\end{figure*}
+
+Vue introduces the concept of \textit{reactive} data - when a JavaScript object changes value, any component which is using the data (observing it) automatically updates to use the new value. Retrieving the user's current location is a key requirement for any implementation of the Taxicoin protocol, and within a web browser this can be done using the geolocation browser API.
+
+To adapt this for use with Vue's reactive models, a Vue \textit{plugin} has been created as part of this implementation. This creates a \lstinline{$location} object available to all components globally, which has latitude and longitude components, both of which are reactive.
+
+Another plugin was also created for exposing a Taxicoin library instance to all components. This means that instead of needing to instantiate this for each page components and then pass it to child components where needed, the one instance is available globally.
+
+Although this client implementation is functional, it is not feature complete at the time of writing, and does not implement all features of the library, such as sending of the driver's location to the rider, or a user interface for proposing a fare alteration. However, it is sufficient as a proof of concept.
+
+Additionally, this application is most likely to be used from a mobile device (very few taxi drivers carry a laptop with them). This is possible using the Status mobile Ethereum browser \cite{Status.im}, which exposes a Web3.js object to web pages (also including Whisper protocol functionality, and in fact pioneering the 6th iteration of the protocol).

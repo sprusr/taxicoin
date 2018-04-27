@@ -19,9 +19,8 @@ Finally, a static analysis tool has been applied on the smart contract to check 
 
 % Integration tests, based on protocol specification
 
-The functional integration tests use the \textit{Ganache} [cite] tool to emulate a blockchain, on which we deploy the Taxicoin contract. The framework used for testing is Mocha [cite], along with the Chai [cite] assertion library. The tests are orchestrated by Karma [cite], which transpiles the JavaScript library and launches a Google Chrome browser instance in which to run the tests. Before each test, the state of the Taxicoin contract is reset, and a new Taxicoin library instance is constructed for use. These are then cleaned up in the after hook.
+The functional integration tests use the \textit{Ganache} \cite{Ganache} tool to emulate a blockchain, on which we deploy the Taxicoin contract. The framework used for testing is Mocha \cite{Mocha}, along with the Chai \cite{Chai} assertion library. The tests are orchestrated by Karma \cite{Karma}, which transpiles the JavaScript library and launches a Google Chrome browser instance in which to run the tests. Before each test, the state of the Taxicoin contract is reset, and a new Taxicoin library instance is constructed for use. These are then cleaned up in the after hook.
 
-% TODO: test case examples
 \begin{lstlisting}[language=JavaScript]
 describe('driver accept journey', () => {
   it('should throw an error if the provided address (rider) has not agreed to ride with the driver', async () => {
@@ -61,15 +60,13 @@ describe('driver accept journey', () => {
 
 Each test group is based around one of the methods or messages, as described in the protocol specification. With the methods, we can easily construct each individual test scenario based on the pre- and post-conditions.
 
-% TODO: something about coverage
-
 These tests ensure the technical requirements, as defined in the protocol specification, are met.
 
 \subsubsection{Unit Tests}
 
 % Unit tests on contract
 
-As mentioned previously, Solidity is still a fairly immature language, however related tooling does exist for running unit tests. The Truffle framework [cite] provides a Solidity-based testing tool, with standard assertions.
+As mentioned previously, Solidity is still a fairly immature language, however related tooling does exist for running unit tests. The Truffle framework \cite{Truffle} provides a Solidity-based testing tool, with standard assertions.
 
 Unit tests have been used with Taxicoin to ensure that the contract (written in Solidity) performs the implemented functionality as expected. Each test case calls certain methods within the contract, given certain pre-conditions, and checks that the resulting state of the contract is as expected. An example test case is given below.
 

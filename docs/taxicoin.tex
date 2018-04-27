@@ -68,21 +68,40 @@
 % add the file containing our references
 \addbibresource{main.bib}
 
-% sections on new page
-\newcommand{\sectionbreak}{\clearpage}
-
 % document info
 \title{Taxicoin: A Decentralised Taxi Protocol}
-\author{Scott Street\\{\small 159027651}}
+\author{Scott Street}
 \date{April 2018}
 
 \begin{document}
 
-\maketitle
+\begin{titlepage}
+	\centering
+	
+	\includegraphics[width=0.4\textwidth]{res/aston-coa.png}\par\vspace{1cm}
 
-\abstract{Taxicoin is a decentralised taxi protocol, developed with openness and fairness in mind, and built on Ethereum. This dissertation details the background to the problems Taxicoin attempts to solve, as well as an explanation of the Ethereum network. It then describes the protocol itself, how it has been implemented, and what steps have been taken to ensure the security, reliability and effectiveness of the implementation.}
+	{\scshape\LARGE Aston University}
+
+	\vspace{0.5cm}
+
+	{\scshape\large Final Year Project\\Computer Science}
+
+	\vspace{2.5cm}
+
+	{\huge\bfseries Taxicoin: A Decentralised Taxi Protocol}
+
+	\vspace{1cm}
+
+	{\Large\itshape Scott Street}
+	
+	\vspace{0.2cm}
+	
+	{\large April 2018}
+\end{titlepage}
 
 \pagebreak
+
+\abstract{Taxicoin is a decentralised taxi protocol, developed with openness and fairness in mind, and built on Ethereum. This dissertation details the background to the problems Taxicoin attempts to solve, as well as an explanation of the Ethereum network. It then describes the protocol itself, how it has been implemented, and what steps have been taken to ensure the security, reliability and effectiveness of the implementation.}
 
 \tableofcontents
 
@@ -90,13 +109,16 @@
 
 \input{tex/intro}
 \input{tex/ethereum}
+\pagebreak
 \input{tex/requirements}
 \input{tex/rfc}
+\pagebreak
 \input{tex/implementation}
+\pagebreak
 \input{tex/vv}
+\pagebreak
 \input{tex/evaluation}
 \input{tex/conclusion}
-
 \pagebreak
 
 \printbibliography[heading=bibintoc]
@@ -105,6 +127,8 @@
 \section*{Appendix}
 \addcontentsline{toc}{section}{Appendix}
 
+\input{tex/appendix/diary}
+\pagebreak
 \input{tex/appendix/project-definition}
 \pagebreak
 \input{tex/appendix/tp1-progress-review}
