@@ -4,7 +4,7 @@ The protocol portion of Taxicoin is designed to be open. As such, anybody should
 
 \subsection{Methods}
 
-Each of these methods is intended to be part of a smart contract. When one is called, it will modify the state of the contract, and/or return a value.
+Each of these methods is intended to be part of a smart contract. When one is called, it will modify the state of the contract, and/or return a value. Any action taken through a contract is considered to be \textit{formal} and binding (once the other party has agreed where applicable).
 
 The specified arguments are to be supplied when calling that function of the contract, with the types representing built-in Solidity language types. The \textit{payable} keyword indicates that a method accepts a transaction with a currency value attached. In instances where the preconditions for a method are not met, the method will revert and the state will be unmodified.
 
@@ -348,20 +348,34 @@ The above methods can be translated to a Solidity interface, which should be con
 
 \lstinputlisting[language=Solidity]{../contracts/ITaxicoin.sol}
 
+\subsection{Protocol Network Architecture}
+
+This diagram is a high-level explanation of how the various components of the Taxicoin protocol fit together.
+
+\begin{figure*}[h!]
+\centering
+\begin{tikzpicture}[node distance=1.8cm]
+	\node (n0) [box] {Smart Contract};
+	\node (n1) [box, below left of=n0, yshift=-2cm, xshift=-3cm] {Rider Client};
+	\node (n2) [box, below right of=n0, yshift=-2cm, xshift=3cm] {Driver Client};
+	
+	\draw [arrow] (n1) -- node[anchor=east, text width=2.5cm, above=0.5cm, left=0.4cm] {Formal rider actions (method calls)} (n0);
+	\draw [arrow] (n2) -- node[anchor=west, text width=2.5cm, above=0.5cm, right=0.4cm] {Formal driver actions (method calls)} (n0);
+	\draw [doublearrow] (n1) -- node[anchor=north, text width=3.5cm, below=0.2cm] {Peer-to-peer via Whisper (messages)}(n2);
+\end{tikzpicture}
+\end{figure*}
+
+As seen in the above figure, the smart contract acts as an \enquote{orchestrator} of sorts. Informal messages between a rider and driver are first conducted off-chain, as explained previously, and formal binding actions are performed through the contract.
+
+Although this architecture assumes the use of Ethereum smart contracts and the Whisper protocol for sending messages, any infrastructure may be used on which it is possible to implement an application which satisfies the protocol standard. Note that if another platform is used, it will not be interoperable with others based on the assumed technologies.
+
 \pagebreak
 \subsection{Process Flow Diagram}
 
 This describes the possible routes of interaction through the system.
 
 \begin{figure*}[h!]
-% include shapes and arrows for flow charts and set up
-\usetikzlibrary{shapes.geometric, arrows}
-\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, text width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30]
-\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, text width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30]
-\tikzstyle{process} = [rectangle, minimum width=3cm, text width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30]
-\tikzstyle{decision} = [diamond, aspect=1.2, minimum width=3cm, text width=2cm, minimum height=1cm, text centered, draw=black, fill=green!30]
-\tikzstyle{arrow} = [thick,->,>=stealth]
-
+\centering
 \begin{tikzpicture}[node distance=1.8cm]
 	\node (n0) [startstop] {Driver Start};
 	\node (n1) [process, below of=n0] {Driver Advertise};
@@ -412,3 +426,5 @@ This describes the possible routes of interaction through the system.
 	\draw [arrow] (n19.west) -- ++(-9mm,0) |- (n13.west);
 \end{tikzpicture}
 \end{figure*}
+
+

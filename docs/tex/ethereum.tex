@@ -4,9 +4,34 @@ Ethereum is a platform consisting of three components: Swarm, a “distributed s
 
 \subsection{Blockchains}
 
-The EVM component of Ethereum is built on top of a “blockchain”, a term coined by the anonymous creator of Bitcoin \cite{Bitcoin}, which is the original, and most widely known application of such technology. At its core, a blockchain consists of transactions, grouped together into “blocks”, with each group also referencing the previous one, thus forming a “chain”. A blockchain can be thought of simply as a form of database, keeping a state. A transaction represents a state transition, but must be verified before being deemed to be valid and placed in a block.
+The EVM component of Ethereum is built on top of a “blockchain”, a term coined by the anonymous creator of Bitcoin \cite{Bitcoin}, which is the original, and most widely known application of such technology. At its core a blockchain consists of transactions, grouped together into “blocks”, with each group also referencing the previous one by hash, thus forming a “chain”. A blockchain can be thought of simply as a form of database, keeping a state. A transaction represents a state transition, but must be verified before being deemed to be valid and placed in a block.
 
-% TODO: blockchain diagram here?
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[node distance=8mm, minimum height=0.6cm]
+	\draw (-5.5,-1) -- (-1,-1) -- (-1,2) -- (-5.5,2) -- (-5.5,-1);
+	\node (block0) [anchor=north west] at (-5.5,2) {Block};
+	
+	\draw (5.5,-1) -- (1,-1) -- (1,2) -- (5.5,2) -- (5.5,-1);
+	\node (block1) [anchor=north west] at (1,2) {Block};
+	
+	\node (n0) [draw, below of=block0, xshift=7mm] {Prev Hash};
+	\node (n1) [draw, right of=n0, xshift=1.1cm] {Nonce};
+	\node (n2) [draw, below of=n0, xshift=-6.4mm] {Tx};
+	\node (n3) [draw, right of=n2, xshift=0.65cm] {Tx};
+	\node (n4) [draw, right of=n3, xshift=0.65cm] {...};
+	
+	\node (n5) [draw, below of=block1, xshift=7mm] {Prev Hash};
+	\node (n6) [draw, right of=n5, xshift=1.1cm] {Nonce};
+	\node (n7) [draw, below of=n5, xshift=-6.4mm] {Tx};
+	\node (n8) [draw, right of=n7, xshift=0.65cm] {Tx};
+	\node (n9) [draw, right of=n8, xshift=0.65cm] {...};
+	
+	\draw [arrow] (-1,0.9) -- (1.3,0.9);
+	\draw [arrow] (-6.5,0.9) -- (-5.2,0.9);
+\end{tikzpicture}
+\caption{How \enquote{blocks} are linked using hashes. Adapted from \cite{Bitcoin}.}
+\end{figure}
 
 The blockchain itself is distributed across all nodes in the network (except in cases where a node chooses to reference another’s copy), meaning that, unless explicitly obfuscated by the user, all transaction data on the network is open. This allows the auditing of transactions by any node on the network, and eliminates the need to trust a single entity to provide accurate data - this is the concept of trustlessness.
 

@@ -65,6 +65,16 @@
 	captionpos=b
 }
 
+% include shapes and arrows for flow charts and set up
+\usetikzlibrary{shapes.geometric, arrows}
+\tikzstyle{box} = [rectangle, minimum width=3cm, text width=3cm, minimum height=1cm,text centered, draw=black]
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, text width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30]
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, text width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30]
+\tikzstyle{process} = [rectangle, minimum width=3cm, text width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30]
+\tikzstyle{decision} = [diamond, aspect=1.2, minimum width=3cm, text width=2cm, minimum height=1cm, text centered, draw=black, fill=green!30]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+\tikzstyle{doublearrow} = [thick,<->,>=stealth]
+
 % add the file containing our references
 \addbibresource{main.bib}
 
@@ -114,6 +124,8 @@
 \addcontentsline{toc}{section}{Appendix}
 
 \input{tex/appendix/diary}
+\pagebreak
+\input{tex/readme}
 \pagebreak
 \input{tex/appendix/project-definition}
 \pagebreak
