@@ -519,7 +519,7 @@ class Taxicoin {
     this._shhPubKey = pubKey
 
     // set min PoW
-    await this.shh.setMinPoW(0.02)
+    await this.shh.setMinPoW(0.002)
   }
 
   async _sendShhMessage (pubKey, topic, payload) {
@@ -527,11 +527,11 @@ class Taxicoin {
     return this.shh.post({
       pubKey: pubKey, // pubKey of recipient
       sig: this._shhIdentity, // sign it to prove it's from us
-      ttl: 10,
+      ttl: 30,
       topic: topic, // 4 bytes
       payload: this.web3.utils.asciiToHex(JSON.stringify(payload)),
-      powTime: 10, // how long to maths
-      powTarget: 0.02 // how hard to maths
+      powTime: 1, // how long to maths
+      powTarget: 0.002 // how hard to maths
     })
   }
 
