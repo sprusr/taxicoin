@@ -8,6 +8,7 @@ $page-background-color: #ebebeb;
 $content-background-color: #ffffff;
 $border-color: #e4e0e0;
 $highlight-color: #5aac7d;
+$dark-color: #666;
 
 // MIXINS
 @mixin taxicoin-button($button-color, $button-text-color) {
@@ -26,14 +27,4 @@ $highlight-color: #5aac7d;
   &:active {
     background-color: darken($button-color, 20);
   }
-}
-
-@mixin taxicoin-input() {
-  height: 30px;
-  line-height: 30px;
-  padding: 5px;
-  font-size: 12pt;
-  display: block;
-  border: 1px solid $border-color;
-  margin: 5px 0;
 }

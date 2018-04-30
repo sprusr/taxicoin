@@ -1,0 +1,77 @@
+* {
+  box-sizing: border-box;
+}
+
+body, html {
+  margin: 0;
+  background-color: $page-background-color;
+  height: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+a[role="button"] {
+  cursor: pointer;
+}
+
+#app {
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: $text-color;
+  height: 100%;
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  max-width: $page-width;
+  margin: 0 auto;
+}
+
+.absolute-wrapper {
+  position: absolute;
+  z-index: 500;
+  width: 100%;
+}
+
+.center {
+  text-align: center;
+}
+
+.taxicoin-input {
+  height: 40px;
+  line-height: 40px;
+  padding: 5px;
+  font-size: 12pt;
+  display: block;
+  border: 1px solid $border-color;
+  margin: 5px 0;
+}
+
+.taxicoin-button {
+  border: none;
+  background-color: $highlight-color;
+  color: #fff;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 1.2rem;
+  padding: 5px 10px;
+  margin-bottom: 10px;
+
+  &:hover {
+    background-color: darken($highlight-color, 10);
+  }
+
+  &:active {
+    background-color: darken($highlight-color, 20);
+  }
+}
