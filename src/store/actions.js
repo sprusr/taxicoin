@@ -61,12 +61,12 @@ const actions = {
     })
   },
 
-  async endJourney ({ commit }, { rating }) {
+  async endJourney ({ commit, state }, { rating }) {
     commit('setEnding')
     await v.$tc.completeJourney(rating)
-    const journey = v.$tc.getJourney()
+    const driver = v.$tc.getDriver(state.journey.driver.addr)
 
-    if (journey.driver.riderRating) {
+    if (driver.riderRating) {
       commit('setFinished')
     } else {
       commit('setEnded')
