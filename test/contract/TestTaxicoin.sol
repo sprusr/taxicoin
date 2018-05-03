@@ -10,15 +10,21 @@ contract TestTaxicoin {
   uint public initialBalance = 1 ether;
 
   function testDriverAdvertise() public {
-    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
+    Taxicoin tc = new Taxicoin();
 
     string memory lat = "1.23";
     string memory lon = "50.67";
     string memory pubKey = "<pub_key_goes_here>";
-
     uint driverDeposit = tc.driverDeposit();
-    tc.driverAdvertise.value(driverDeposit)(lat, lon, pubKey);
 
+    // test without deposit
+    ThrowProxy throwProxy = new ThrowProxy(address(tc));
+    Taxicoin(address(throwProxy)).driverAdvertise(lat, lon, pubKey);
+    bool result = throwProxy.execute.gas(200000)();
+    Assert.false(result, "driverAdvertse should throw if deposit not provided");
+
+    // test with expected conditions
+    tc.driverAdvertise.value(driverDeposit)(lat, lon, pubKey);
     FetchedDriver memory dr = getDriver(tc, tx.origin);
 
     Assert.equal(dr.addr, tx.origin, "driver addr should equal address of sender");
@@ -27,69 +33,38 @@ contract TestTaxicoin {
     Assert.equal(dr.pubKey, pubKey, "driver pubKey should equal advertised pubKey");
     Assert.equal(dr.updated, block.timestamp, "driver updated should equal block timestamp");
     Assert.equal(dr.deposit, driverDeposit, "driver deposit should equal global driver deposit");
+
+    // test is in list
+    bool driverFound = isInDriverList(tx.origin);
+    Assert.isTrue(driverFound, "driver should be in driver index");
   }
 
   function testDriverRevokeAdvert() public {
-    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
-    Assert.equal(true, true, "Truth!");
-  }
+    Taxicoin tc = new Taxicoin();
 
-  function testRiderCreateJourney() public {
-    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
-    Assert.equal(true, true, "Truth!");
-  }
+    string memory lat = "1.23";
+    string memory lon = "50.67";
+    string memory pubKey = "<pub_key_goes_here>";
+    uint driverDeposit = tc.driverDeposit();
 
-  function testRiderCancelJourney() public {
-    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
-    Assert.equal(true, true, "Truth!");
-  }
+    // test before driver has advertised
+    ThrowProxy throwProxy = new ThrowProxy(address(tc));
+    Taxicoin(address(throwProxy)).driverRevokeAdvert();
+    bool result = throwProxy.execute.gas(200000)();
+    Assert.false(result, "driverRevokeAdvert should throw if caller is not advertised");
 
-  function testDriverAcceptJourney() public {
-    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
-    Assert.equal(true, true, "Truth!");
-  }
+    // test expected
+    tc.driverAdvertise.value(driverDeposit)(lat, lon, pubKey);
+    tc.driverRevokeAdvert();
+    FetchedDriver memory dr = getDriver(tc, tx.origin);
 
-  function testCompleteJourney() public {
-    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
-    Assert.equal(true, true, "Truth!");
-  }
+    Assert.equal(dr.addr, address(0), "driver addr should equal zero");
+    Assert.equal(dr.deposit, driverDeposit, "driver deposit should not be returned");
 
-  function testDriverProposeFareAlteration() public {
-    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
-    Assert.equal(true, true, "Truth!");
+    // test is not in list
+    bool driverFound = isInDriverList(tx.origin);
+    Assert.isFalse(driverFound, "driver should not be in driver index");
   }
-
-  function testRiderConfirmFareAlteration() public {
-    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
-    Assert.equal(true, true, "Truth!");
-  }
-
-  function testGetUserTypey() public {
-    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
-    Assert.equal(true, true, "Truth!");
-  }
-
-  function testGetDriver() public {
-    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
-    Assert.equal(true, true, "Truth!");
-  }
-
-  function testGetNextDriver() public {
-    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
-    Assert.equal(true, true, "Truth!");
-  }
-
-  function testGetPreviousDriver() public {
-    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
-    Assert.equal(true, true, "Truth!");
-  }
-
-  function testGetRider() public {
-    Taxicoin tc = Taxicoin(DeployedAddresses.Taxicoin());
-    Assert.equal(true, true, "Truth!");
-  }
-
-  /**************/
 
   struct FetchedDriver {
 		address addr;
@@ -111,4 +86,38 @@ contract TestTaxicoin {
     return FetchedDriver(addr, lat, lon, pubKey, updated, rider, deposit, rating, ratingCount, riderRating, proposedNewFare, hasProposedNewFare);
   }
 
+  function isInDriverList(address _driver) {
+    address currentDriver = tc.dllDriverIndex(address(0), true);
+    bool driverFound = false;
+
+    while (!driverFound && currentDriver != address(0)) {
+      if (currentDriver == _driver) {
+        driverFound = true;
+      }
+      currentDriver = tc.dllDriverIndex(currentDriver, true);
+    }
+
+    return driverFound;
+  }
+
+}
+
+// from http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
+// proxy contract for testing throws
+contract ThrowProxy {
+  address public target;
+  bytes data;
+
+  function ThrowProxy(address _target) {
+    target = _target;
+  }
+
+  // prime the data using the fallback function.
+  function() {
+    data = msg.data;
+  }
+
+  function execute() returns (bool) {
+    return target.call(data);
+  }
 }

@@ -534,8 +534,29 @@ describe('taxicoin client library', () => {
     })
   })
 
-  describe('propose new fare', () => {
-    it('should cause the other party to recieve a propose fare alteration message')
+  describe.only('propose new fare', () => {
+    it('should cause the other party to recieve a propose fare alteration message', async () => {
+      const driverAccount = await tcDriver.getAccount()
+      const riderAccount = await tcRider.getAccount()
+      const fare = 100
+      const newFare = 200
+      const riderRating = 255
+      const driverRating = 255
+
+      await tcDriver.driverAdvertise(51.5074, 0.1278)
+      await tcRider.riderCreateJourney(driverAccount, fare)
+      await tcDriver.driverAcceptJourney(riderAccount, fare)
+
+      const p = new Promise((resolve, reject) => {
+        tcRider.on('newFare', (message) => {
+          resolve()
+        })
+      })
+
+      tcDriver.proposeNewFare(newFare)
+
+      return p
+    }).timeout(5000)
   })
 
   describe('driver propose fare alteration', () => {
